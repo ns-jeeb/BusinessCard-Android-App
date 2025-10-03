@@ -164,8 +164,7 @@ fun CreateCardScreen(onCardSaved: (BusinessCard) -> Unit) {
 @Composable
 fun BusinessCardScreen(myCard: BusinessCard, onShowListClicked: () -> Unit) {
     val cardDataString = "businesscard:${myCard.name}|${myCard.title}|${myCard.phone}|${myCard.email}|${myCard.website}|${myCard.address}"
-
-    val appUrl = "https://play.google.com/store/apps/details?id=com.example.businesscard"
+    val appUrl = "https://play.google.com/store/apps/details?id=dev.najeeb.businesscard.cardwallet"
     var qrContent by remember { mutableStateOf(cardDataString) } // Default to showing contact info
     val qrCodeBitmap = generateQrCode(qrContent)
     Column(
