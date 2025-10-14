@@ -4,9 +4,9 @@ import android.content.Context.MODE_PRIVATE
 import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Bitmap
-import android.graphics.Color
 import androidx.compose.foundation.lazy.items
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -48,12 +48,22 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.core.view.WindowCompat
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.core.net.toUri
 import dev.najeeb.businesscard.cardwallet.ui.theme.BusinessCardTheme
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.set
+import dev.najeeb.businesscard.cardwallet.ui.theme.GradientEnd
+import dev.najeeb.businesscard.cardwallet.ui.theme.GradientStart
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import dev.najeeb.businesscard.cardwallet.ui.theme.CardBackgroundColor
+import dev.najeeb.businesscard.cardwallet.ui.theme.CardBlack
+import dev.najeeb.businesscard.cardwallet.ui.theme.CardWhite
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,36 +80,49 @@ class MainActivity : ComponentActivity() {
             BusinessCardTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    color = Color.Transparent // Make the Surface transparent
                 ) {
                     BusinessCardApp(cardViewModel = cardViewModel)
+                    val matrix = arrayOf(
+                        intArrayOf(1, 2, 3),
+                        intArrayOf(4, 5, 6),
+                        intArrayOf(7, 8, 9)
+                    )
                 }
             }
         }
     }
 }
-
 @Composable
 fun BusinessCardApp(cardViewModel: CardViewModel) {
-    val cards by cardViewModel.allCards.collectAsState(initial = emptyList())
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(CardBackgroundColor, GradientEnd)
+                )
+            )
+    ){val cards by cardViewModel.allCards.collectAsState(initial = emptyList())
 
-    // This state will control which screen we are on
-    var showMyCardScreen by remember { mutableStateOf(true) }
+        // This state will control which screen we are on
+        var showMyCardScreen by remember { mutableStateOf(true) }
 
-    if (cards.isEmpty()) {
-        // If there are no cards at all, force user to create one
-        CreateCardScreen { card ->
-            cardViewModel.insertCard(card)
-        }
-    } else {
-        val myCard = cards.first()
-
-        if (showMyCardScreen) {
-            // Show the user's personal card with QR code
-            BusinessCardScreen(myCard = myCard, onShowListClicked = { showMyCardScreen = false })
+        if (cards.isEmpty()) {
+            // If there are no cards at all, force user to create one
+            CreateCardScreen { card ->
+                cardViewModel.insertCard(card)
+            }
         } else {
-            // Show the list of all collected cards
-            CardListScreen(cards = cards, onBackClicked = { showMyCardScreen = true })
+            val myCard = cards.first()
+
+            if (showMyCardScreen) {
+                // Show the user's personal card with QR code
+                BusinessCardScreen(myCard = myCard, onShowListClicked = { showMyCardScreen = false })
+            } else {
+                // Show the list of all collected cards
+                CardListScreen(cards = cards, onBackClicked = { showMyCardScreen = true })
+            }
         }
     }
 }
@@ -134,7 +157,8 @@ fun CreateCardScreen(onCardSaved: (BusinessCard) -> Unit) {
         // Since it's scrollable, we align content to the top, not center it.
         verticalArrangement = Arrangement.Top
     ) {
-        Text("Create Your Business Card", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+        Text("Create Your Business Card",textAlign = TextAlign.Center,
+            fontSize = 24.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(32.dp))
 
         TextField(value = name, onValueChange = { name = it }, label = { Text("Your Name") })
@@ -207,7 +231,7 @@ fun BusinessCardScreen(myCard: BusinessCard, onShowListClicked: () -> Unit) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp),){
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)){
             Button(onClick = { qrContent = cardDataString }) {
                 Image(
                     painter = painterResource(id = R.drawable.person_add),
@@ -274,7 +298,7 @@ private fun generateQrCode(content: String): Bitmap? {
         val bmp = createBitmap(width, height, Bitmap.Config.RGB_565)
         for (x in 0 until width) {
             for (y in 0 until height) {
-                bmp[x, y] = if (bitMatrix[x, y]) Color.BLACK else Color.WHITE
+                bmp[x, y] = if (bitMatrix[x, y]) CardBlack.toArgb() else CardWhite.toArgb()
             }
         }
         bmp
@@ -287,7 +311,13 @@ private fun generateQrCode(content: String): Bitmap? {
 @Composable
 fun CardListScreen(cards: List<BusinessCard>, onBackClicked: () -> Unit) {
     Column(modifier = Modifier.fillMaxSize()) {
-        Button(onClick = onBackClicked, modifier = Modifier.padding(16.dp)) {
+        Spacer(modifier = Modifier.height(60.dp))
+        Button(onClick = onBackClicked, modifier = Modifier.padding(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Transparent, // Set the background to transparent
+                contentColor = MaterialTheme.colorScheme.primary // Set the text color
+            )
+            ) {
             Text("Back to My Card")
         }
         LazyColumn(
@@ -308,12 +338,14 @@ fun CardListScreen(cards: List<BusinessCard>, onBackClicked: () -> Unit) {
 fun BusinessCardItem(card: BusinessCard) {
     val context = LocalContext.current
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         // The main container arranges everything vertically
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier
+            .background(CardBackgroundColor)
+            .padding(16.dp)) {
 
             // --- INFO SECTION ---
             Text(
