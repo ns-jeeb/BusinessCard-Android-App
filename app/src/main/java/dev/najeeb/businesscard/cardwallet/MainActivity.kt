@@ -1,4 +1,5 @@
 package dev.najeeb.businesscard.cardwallet
+
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
@@ -65,6 +66,7 @@ import dev.najeeb.businesscard.cardwallet.ui.theme.GradientStart
 import dev.najeeb.businesscard.cardwallet.ui.theme.Purple80
 import dev.najeeb.businesscard.cardwallet.ui.theme.btnContactColor
 import androidx.compose.ui.graphics.Color
+import androidx.core.view.WindowInsetsCompat
 import dev.najeeb.businesscard.cardwallet.ui.theme.disabledColor
 import dev.najeeb.businesscard.cardwallet.ui.theme.enabledColor
 
@@ -77,11 +79,14 @@ enum class Screen {
     CARD_LIST,
     CARD_DETAIL
 }
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val application = requireNotNull(this).application
-
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+        val controller = WindowCompat.getInsetsController(window, window.decorView)
+        controller.show(WindowInsetsCompat.Type.systemBars())
         val cardViewModel: CardViewModel by viewModels {
             CardViewModelFactory(application)
         }
@@ -100,6 +105,7 @@ class MainActivity : ComponentActivity() {
 
         }
     }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         // Handle deep link if the app is already open and receives a new one
@@ -118,9 +124,8 @@ fun AppTopBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .border(2.dp, Purple80)
-            .statusBarsPadding()
-            .background(color = GradientEnd),
+            .background(brush = Brush.verticalGradient(colors = listOf(GradientStart, GradientEnd)))
+            .statusBarsPadding().padding(0.dp,15.dp, 0.dp, 0.dp),
         horizontalArrangement = Arrangement.SpaceEvenly, // Distribute buttons evenly
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -134,7 +139,7 @@ fun AppTopBar(
                 containerColor = enabledColor,
             ),
             // 2. Remove the default padding so our gradient can fill the space
-            contentPadding = PaddingValues(0.dp),
+            contentPadding = PaddingValues(15.dp, 0.dp, 15.dp, 0.dp),
             // Optional: Add an elevation for a shadow effect
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
         ) {
@@ -149,6 +154,8 @@ fun AppTopBar(
                 disabledContainerColor = disabledColor,
                 containerColor = enabledColor,
             ),
+
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
         ) {
             Text("Collected Cards")
         }
@@ -177,7 +184,6 @@ private fun handleIntent(intent: Intent?, viewModel: CardViewModel) {
         intent.data = null
     }
 }
-
 
 
 @Composable
@@ -210,7 +216,7 @@ fun BusinessCardApp(cardViewModel: CardViewModel) {
                 onNavigateToMyCard = { currentScreen = Screen.MY_CARD },
                 onNavigateToList = { currentScreen = Screen.CARD_LIST },
 
-            )
+                )
         },
         bottomBar = {
             if (currentScreen == Screen.MY_CARD) {
@@ -221,10 +227,10 @@ fun BusinessCardApp(cardViewModel: CardViewModel) {
                     // When a button is clicked in the bar, this lambda updates the state here
                     onQrContentChange = { newContent ->
                         qrContent = newContent
-                    }
+                    },
+                    onScanClicked = { currentScreen = Screen.SCANNER }
                 )
             }
-
         }
     ) { innerPadding ->
         Box(
@@ -238,7 +244,6 @@ fun BusinessCardApp(cardViewModel: CardViewModel) {
                     existingCard = null,
                     onCardSaved = { newCard -> cardViewModel.saveOrUpdateUserCard(newCard) }
                 )
-
                 Screen.EDIT -> CreateCardScreen(
                     existingCard = myCard,
                     onCardSaved = { updatedCard ->
@@ -246,7 +251,6 @@ fun BusinessCardApp(cardViewModel: CardViewModel) {
                         currentScreen = Screen.MY_CARD
                     }
                 )
-
                 Screen.MY_CARD -> myCard?.let { userCard ->
                     BusinessCardScreen(
                         myCard = userCard,
@@ -254,22 +258,16 @@ fun BusinessCardApp(cardViewModel: CardViewModel) {
                         onScanClicked = { currentScreen = Screen.SCANNER }
                     )
                 }
-
                 Screen.CARD_LIST -> ListCardScreen().CardListScreen(
                     cards = collectedCards,
                     onItemClicked = { clickedCard ->
                         if (currentScreen == Screen.CARD_LIST) {
                             selectedCard = clickedCard
                             cardViewModel.deleteCollectedCard(collectedCards[collectedCards.indexOf(clickedCard)])
-                            Log.d("CardListScreen", "${collectedCards[collectedCards.indexOf(clickedCard)]} Card deleted")
-                            Log.d("CardListScreen", "Card List: ${collectedCards.lastIndex}")
-                            currentScreen = Screen.MY_CARD
-                            Toast.makeText(context, "Card Deleted", Toast.LENGTH_SHORT).show()
+                            currentScreen = Screen.CARD_LIST
                         }
                     }
-
                 )
-
                 Screen.SCANNER -> ScannerLauncher(
                     onQrCodeScanned = { scannedData ->
                         val scannedUri = Uri.parse(scannedData)
@@ -297,7 +295,9 @@ fun BusinessCardApp(cardViewModel: CardViewModel) {
 
 @Composable
 fun CardDetailScreen(card: BusinessCard, onBack: () -> Unit) {
-    Box(modifier = Modifier.fillMaxSize().background(enabledColor)){
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .background(enabledColor)) {
         Button(onClick = {}) {
             Text("this a button")
         }
@@ -316,7 +316,6 @@ private fun generateCardDataString(myCard: BusinessCard): String {
     return "cardwallet://add?name=$encodedName&title=$encodedTitle&phone=$encodedPhone&email=$encodedEmail&website=$encodedWebsite&address=$encodedAddress&imageUri=$encodedImageUri"
 }
 
-
 @Composable
 fun AppBottomBar(
     currentQrContent: String,
@@ -324,7 +323,8 @@ fun AppBottomBar(
     cardDataString: String,
     googlePlayUrl: String,
     // It reports when the user wants to change the QR code
-    onQrContentChange: (newContent: String) -> Unit
+    onQrContentChange: (newContent: String) -> Unit,
+    onScanClicked: () -> Unit
 ) {
 
     Column(
@@ -335,11 +335,12 @@ fun AppBottomBar(
             .navigationBarsPadding()
             .padding(vertical = 12.dp),
 
-    ) {
+        ) {
         // Button to show Contact Info QR Code
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
-            verticalAlignment = Alignment.CenterVertically,) {
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Spacer(Modifier.weight(1f))
 
             Button(
@@ -350,33 +351,38 @@ fun AppBottomBar(
                     disabledContainerColor = disabledColor,
                     containerColor = enabledColor,
                 ),
-            ){
+            ) {
                 Icon(
                     imageVector = Icons.Default.ContactPhone,
                     contentDescription = "Contact Info",
                 )
             }
+            Spacer(modifier = Modifier.size(16.dp))
 
+            Icon(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clickable(onClick = { onScanClicked() }),
+                imageVector = Icons.Default.QrCodeScanner,
+                contentDescription = "QR Code Scanner Icon",
+            )
             Spacer(Modifier.weight(1f))
 
-            Button (onClick = { onQrContentChange(googlePlayUrl)},
+            Button(
+                onClick = { onQrContentChange(googlePlayUrl) },
                 enabled = currentQrContent != googlePlayUrl,
-                        colors = ButtonDefaults.buttonColors(
-                        disabledContainerColor = disabledColor,
-                        containerColor = enabledColor)
-                ){
+                colors = ButtonDefaults.buttonColors(
+                    disabledContainerColor = disabledColor,
+                    containerColor = enabledColor
+                )
+            ) {
                 Icon(
                     imageVector = Icons.Default.Download,
                     contentDescription = "App Download"
                 )
             }
-
-
             Spacer(Modifier.weight(1f))
         }
-
-
-
     }
 }
 
@@ -460,6 +466,7 @@ fun CreateCardScreen(
         }
     }
 }
+
 @Composable
 fun BusinessCardScreen(
     myCard: BusinessCard,
@@ -476,15 +483,6 @@ fun BusinessCardScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center // Center the content
     ) {
-        Spacer(modifier = Modifier.size(16.dp))
-        Icon(
-            imageVector = Icons.Default.QrCodeScanner,
-            contentDescription = "QR Code Scanner Icon",
-            modifier = Modifier
-                .size(40.dp)
-                .clickable(onClick = onScanClicked)
-                .background(color = btnContactColor),
-        )
         Spacer(modifier = Modifier.size(16.dp))
         // Top buttons for navigation
         Spacer(modifier = Modifier.size(16.dp))
@@ -509,26 +507,38 @@ fun BusinessCardScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Spacer(modifier = Modifier.height(16.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center){
-            Image(modifier = Modifier.size(150.dp, 100.dp), painter = painterResource(id = R.drawable.ic_action_name),
-                    contentDescription = "google play",)
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+            Image(
+                modifier = Modifier.size(150.dp, 100.dp), painter = painterResource(id = R.drawable.business_card_icon),
+                contentDescription = "google play",
+            )
             Spacer(modifier = Modifier.width(8.dp))
             Column {
-                Text(text = myCard.name,
-                    color = Purple80)
-                Text(text = myCard.title,
-                    color = Purple80)
-                Text(text = myCard.address,
-                    color = Purple80)
+                Text(
+                    text = myCard.name,
+                    color = Purple80
+                )
+                Text(
+                    text = myCard.title,
+                    color = Purple80
+                )
+                Text(
+                    text = myCard.address,
+                    color = Purple80
+                )
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
         Column {
-            Text(text = myCard.phone,
-                color = Purple80 )
+            Text(
+                text = myCard.phone,
+                color = Purple80
+            )
             Spacer(modifier = Modifier.width(8.dp))
-            Text(text = myCard.email,
-                color = Purple80)
+            Text(
+                text = myCard.email,
+                color = Purple80
+            )
         }
     }
 }
