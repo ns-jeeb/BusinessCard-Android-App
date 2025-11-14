@@ -1,8 +1,6 @@
 package dev.najeeb.businesscard.cardwallet
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.Color
-import androidx.compose.foundation.lazy.items
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -10,11 +8,7 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -41,127 +35,320 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import dev.najeeb.businesscard.cardwallet.ui.theme.BusinessCardTheme
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.set
 import android.net.Uri
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.shape.CircleShape
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.foundation.border
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContactPhone
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.text.style.TextAlign
 import androidx.core.view.WindowCompat
-import coil.compose.rememberAsyncImagePainter
-import dev.najeeb.businesscard.cardwallet.ui.theme.Pink40
 import dev.najeeb.businesscard.cardwallet.ui.theme.btnModifier
-import dev.najeeb.businesscard.cardwallet.ui.theme.detailTextStyle
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.graphics.Brush
-import dev.najeeb.businesscard.cardwallet.ui.theme.CardBackgroundColor
+import androidx.compose.ui.graphics.toArgb
 import dev.najeeb.businesscard.cardwallet.ui.theme.GradientEnd
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanOptions
+import dev.najeeb.businesscard.cardwallet.ui.theme.GradientStart
+import dev.najeeb.businesscard.cardwallet.ui.theme.Purple80
+import dev.najeeb.businesscard.cardwallet.ui.theme.btnContactColor
+import androidx.compose.ui.graphics.Color
+import dev.najeeb.businesscard.cardwallet.ui.theme.disabledColor
+import dev.najeeb.businesscard.cardwallet.ui.theme.enabledColor
 
-private enum class Screen {
-    CREATION, // For creating the user's own card for the first time
-    MY_CARD,  // For displaying the user's own card
-    EDIT,     // For editing the user's own card
-    CARD_LIST // For showing the collected cards from the database
+
+enum class Screen {
+    SCANNER,
+    CREATION,
+    MY_CARD,
+    EDIT,
+    CARD_LIST
 }
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
         val application = requireNotNull(this).application
 
-        // Create the ViewModel using the factory
         val cardViewModel: CardViewModel by viewModels {
             CardViewModelFactory(application)
         }
-
+        WindowCompat.enableEdgeToEdge(window)
+        handleIntent(intent, cardViewModel)
         setContent {
             BusinessCardTheme {
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(color = GradientEnd),
                 ) {
                     BusinessCardApp(cardViewModel = cardViewModel)
                 }
             }
+
         }
     }
-}
-@Composable
-fun BusinessCardApp(cardViewModel: CardViewModel) {
-    // Get the user's card from the ViewModel's SharedPreferences state
-    val myCard by cardViewModel.userCard
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        // Handle deep link if the app is already open and receives a new one
+        val cardViewModel: CardViewModel by viewModels()
+        handleIntent(intent, cardViewModel)
+    }
 
-    // Get the list of collected cards from the ViewModel's database state
-    val collectedCards by cardViewModel.allCards.observeAsState(initial = emptyList())
-    Box(
+}
+
+@Composable
+fun AppTopBar(
+    currentScreen: Screen,
+    onNavigateToMyCard: () -> Unit,
+    onNavigateToList: () -> Unit,
+) {
+    Row(
         modifier = Modifier
-            .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(CardBackgroundColor, GradientEnd)
-                )
-            )
+            .fillMaxWidth()
+            .border(2.dp, Purple80)
+            .statusBarsPadding()
+            .background(color = GradientEnd),
+        horizontalArrangement = Arrangement.SpaceEvenly, // Distribute buttons evenly
+        verticalAlignment = Alignment.CenterVertically
     ) {
 
-        var currentScreen by remember { mutableStateOf(Screen.CREATION) }
-
-        LaunchedEffect(myCard) {
-            // This effect runs whenever 'myCard' changes.
-            // If myCard exists, go to the MY_CARD screen. Otherwise, stay on CREATION.
-            currentScreen = if (myCard == null) Screen.CREATION else Screen.MY_CARD
+        Button(
+            onClick = onNavigateToMyCard,
+            // Disable the button if we are already on that screen
+            enabled = currentScreen != Screen.MY_CARD,
+            colors = ButtonDefaults.buttonColors(
+                disabledContainerColor = disabledColor,
+                containerColor = enabledColor,
+            ),
+            // 2. Remove the default padding so our gradient can fill the space
+            contentPadding = PaddingValues(0.dp),
+            // Optional: Add an elevation for a shadow effect
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+        ) {
+            Text("My Card")
         }
 
-        when (currentScreen) {
-            Screen.CREATION -> {
-                CreateCardScreen(
-                    existingCard = null,
-                    onCardSaved = { newCard ->
-                        // This now calls the dedicated function to save to SharedPreferences
-                        cardViewModel.saveOrUpdateUserCard(newCard)
+        // Button to go to the "Collected Cards" list
+        Button(
+            onClick = onNavigateToList,
+            enabled = currentScreen != Screen.CARD_LIST,
+            colors = ButtonDefaults.buttonColors(
+                disabledContainerColor = disabledColor,
+                containerColor = enabledColor,
+            ),
+        ) {
+            Text("Collected Cards")
+        }
+    }
+
+}
+
+
+private fun handleIntent(intent: Intent?, viewModel: CardViewModel) {
+    if (intent?.action != Intent.ACTION_VIEW || intent.data == null) return
+
+    val data = intent.data
+    if (data?.scheme == "cardwallet" && data.host == "add") {
+        val card = BusinessCard(
+            id = 0, // 0 for a new card to be inserted by Room
+            name = data.getQueryParameter("name") ?: "",
+            title = data.getQueryParameter("title") ?: "",
+            phone = data.getQueryParameter("phone") ?: "",
+            email = data.getQueryParameter("email") ?: "",
+            website = data.getQueryParameter("website") ?: "",
+            address = data.getQueryParameter("address") ?: "",
+            profilePictureUri = data.getQueryParameter("imageUri")
+        )
+        viewModel.insert(card)
+        // Clear the intent so it's not processed again on rotation
+        intent.data = null
+    }
+}
+
+
+
+@Composable
+fun BusinessCardApp(cardViewModel: CardViewModel) {
+    val myCard by cardViewModel.userCard
+    val collectedCards by cardViewModel.allCards.observeAsState(initial = emptyList())
+
+    val initialScreen = if (myCard == null) Screen.CREATION else Screen.MY_CARD
+    var currentScreen by remember(initialScreen) { mutableStateOf(initialScreen) }
+    var context = LocalContext.current
+
+    // ** 1. Hoist the QR Code state here! **
+    // The strings for the QR codes
+    val cardDataString = myCard?.let { generateCardDataString(it) } ?: ""
+    val appUrl = "https://play.google.com/store/apps/details?id=dev.najeeb.businesscard.cardwallet"
+    // The state that holds the *currently active* QR content
+    var qrContent by remember(myCard) { mutableStateOf(cardDataString) }
+
+    // Make sure the default QR code is reset if the user's card is created/updated
+    LaunchedEffect(cardDataString) {
+        if (cardDataString.isNotEmpty()) {
+            qrContent = cardDataString
+        }
+    }
+    Scaffold(
+        topBar = {
+            AppTopBar(
+                currentScreen = currentScreen,
+                onNavigateToMyCard = { currentScreen = Screen.MY_CARD },
+                onNavigateToList = { currentScreen = Screen.CARD_LIST },
+
+            )
+        },
+        bottomBar = {
+            if (currentScreen == Screen.MY_CARD) {
+                AppBottomBar(
+                    currentQrContent = qrContent,
+                    cardDataString = cardDataString,
+                    googlePlayUrl = appUrl,
+                    // When a button is clicked in the bar, this lambda updates the state here
+                    onQrContentChange = { newContent ->
+                        qrContent = newContent
                     }
                 )
             }
 
-            Screen.EDIT -> {
-                CreateCardScreen(
-                    // We pass the user's card to be edited
+        }
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(innerPadding)
+                .background(brush = Brush.verticalGradient(colors = listOf(GradientEnd, GradientStart)))
+        ) {
+            when (currentScreen) {
+                Screen.CREATION -> CreateCardScreen(
+                    existingCard = null,
+                    onCardSaved = { newCard -> cardViewModel.saveOrUpdateUserCard(newCard) }
+                )
+
+                Screen.EDIT -> CreateCardScreen(
                     existingCard = myCard,
                     onCardSaved = { updatedCard ->
-                        // This calls the SAME function, which just overwrites the entry in SharedPreferences
                         cardViewModel.saveOrUpdateUserCard(updatedCard)
-                        // After saving, go back to the main card screen
                         currentScreen = Screen.MY_CARD
                     }
                 )
-            }
 
-            Screen.MY_CARD -> {
-                myCard?.let { userCard ->
+                Screen.MY_CARD -> myCard?.let { userCard ->
                     BusinessCardScreen(
                         myCard = userCard,
-                        onShowListClicked = { currentScreen = Screen.CARD_LIST },
-                        onEditClicked = { currentScreen = Screen.EDIT }
+                        qrContent = qrContent,
+                        onScanClicked = { currentScreen = Screen.SCANNER }
                     )
                 }
-            }
 
-            Screen.CARD_LIST -> {
-                CardListScreen(
-                    // The list from the database is now clean, no need to .drop(1)
+                Screen.CARD_LIST -> ListCardScreen().CardListScreen(
                     cards = collectedCards,
-                    onBackClicked = { currentScreen = Screen.MY_CARD }
+                    onBackClicked = { currentScreen = Screen.MY_CARD },
+                )
+
+                Screen.SCANNER -> ScannerLauncher(
+                    onQrCodeScanned = { scannedData ->
+                        val scannedUri = Uri.parse(scannedData)
+                        if (scannedUri.scheme == "cardwallet" && scannedUri.host == "add") {
+                            handleIntent(Intent(Intent.ACTION_VIEW, scannedUri), cardViewModel)
+                        } else if (scannedUri.scheme == "https" && "play.google.com" in scannedUri.host.orEmpty()) {
+                            context.startActivity(Intent(Intent.ACTION_VIEW, scannedUri))
+                        }
+                        // After scan, always return to the list
+                        currentScreen = Screen.CARD_LIST
+                    }
                 )
             }
         }
     }
+
 }
+private fun generateCardDataString(myCard: BusinessCard): String {
+    val encodedName = Uri.encode(myCard.name)
+    val encodedTitle = Uri.encode(myCard.title)
+    val encodedPhone = Uri.encode(myCard.phone)
+    val encodedEmail = Uri.encode(myCard.email)
+    val encodedWebsite = Uri.encode(myCard.website)
+    val encodedAddress = Uri.encode(myCard.address)
+    val encodedImageUri = Uri.encode(myCard.profilePictureUri ?: "")
+
+    return "cardwallet://add?name=$encodedName&title=$encodedTitle&phone=$encodedPhone&email=$encodedEmail&website=$encodedWebsite&address=$encodedAddress&imageUri=$encodedImageUri"
+}
+
+
+@Composable
+fun AppBottomBar(
+    currentQrContent: String,
+    // It receives the strings it needs to switch between
+    cardDataString: String,
+    googlePlayUrl: String,
+    // It reports when the user wants to change the QR code
+    onQrContentChange: (newContent: String) -> Unit
+) {
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(brush = Brush.verticalGradient(colors = listOf(GradientEnd, GradientStart)))
+            // This handles the space for the system navigation bar (the gesture bar at the bottom)
+            .navigationBarsPadding()
+            .padding(vertical = 12.dp),
+
+    ) {
+        // Button to show Contact Info QR Code
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically,) {
+            Spacer(Modifier.weight(1f))
+
+            Button(
+                onClick = { onQrContentChange(cardDataString) },
+                // Disable the button if we are already on that screen
+                enabled = currentQrContent != cardDataString,
+                colors = ButtonDefaults.buttonColors(
+                    disabledContainerColor = disabledColor,
+                    containerColor = enabledColor,
+                ),
+            ){
+                Icon(
+                    imageVector = Icons.Default.ContactPhone,
+                    contentDescription = "Contact Info",
+                )
+            }
+
+            Spacer(Modifier.weight(1f))
+
+            Button (onClick = { onQrContentChange(googlePlayUrl)},
+                enabled = currentQrContent != googlePlayUrl,
+                        colors = ButtonDefaults.buttonColors(
+                        disabledContainerColor = disabledColor,
+                        containerColor = enabledColor)
+                ){
+                Icon(
+                    imageVector = Icons.Default.Download,
+                    contentDescription = "App Download"
+                )
+            }
+
+
+            Spacer(Modifier.weight(1f))
+        }
+
+
+
+    }
+}
+
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -192,9 +379,9 @@ fun CreateCardScreen(
                 keyboardController?.hide()
                 focusManager.clearFocus()
             }
-            .padding(24.dp),
+            .padding(24.dp)
+            .statusBarsPadding(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        // Since it's scrollable, we align content to the top, not center it.
         verticalArrangement = Arrangement.Top
     ) {
         Text(
@@ -205,150 +392,120 @@ fun CreateCardScreen(
         Spacer(modifier = Modifier.height(10.dp))
 
         TextField(value = name, onValueChange = { name = it }, label = { Text("Your Name") })
-        Spacer(modifier = detailTextStyle.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
         TextField(value = title, onValueChange = { title = it }, label = { Text("Your Title") })
-        Spacer(modifier = detailTextStyle.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
         TextField(value = phone, onValueChange = { phone = it }, label = { Text("Your Phone") })
-        Spacer(modifier = detailTextStyle.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
         TextField(value = email, onValueChange = { email = it }, label = { Text("Your Email") })
-        Spacer(modifier = detailTextStyle.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
         TextField(value = website, onValueChange = { website = it }, label = { Text("Your Website") })
-        Spacer(modifier = detailTextStyle.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
         TextField(value = address, onValueChange = { address = it }, label = { Text("Your Address") })
-        Spacer(modifier = detailTextStyle.height(32.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
-        ImagePicker(
-            currentImageUri = imageUri,
-            onImagePicked = { uri ->
-                imageUri = uri
-            },
-            modifier = Modifier.padding(vertical = 0.dp)
-        )
-        Spacer(modifier = Modifier.height(10.dp))
-        Button(onClick = {
-            val updateCard = BusinessCard(
-                id = existingCard?.id ?: 0,
-                name = name,
-                title = title,
-                phone = phone,
-                email = email,
-                website = website,
-                address = address,
-                profilePictureUri = imageUri?.toString())
-            onCardSaved(updateCard)
-            keyboardController?.hide()
-        }) {
-            Text(if (existingCard != null) "Update Card" else "Save Card")
+        Button(
+            modifier = btnModifier,
+            onClick = {
+                val newCard = BusinessCard(
+                    id = existingCard?.id ?: 0, // Preserve ID if editing
+                    name = name,
+                    title = title,
+                    phone = phone,
+                    email = email,
+                    website = website,
+                    address = address,
+                    profilePictureUri = imageUri?.toString()
+                )
+                onCardSaved(newCard)
+                keyboardController?.hide()
+                focusManager.clearFocus()
+            }
+        ) {
+            Text(
+                if (existingCard != null) "Update Card" else "Save Card",
+                fontSize = 18.sp
+            )
         }
     }
 }
-
-
 @Composable
 fun BusinessCardScreen(
     myCard: BusinessCard,
-    onShowListClicked: () -> Unit,
-    onEditClicked: () -> Unit) {
-    val cardDataString = "businesscard:${myCard.name}|${myCard.title}|${myCard.phone}|${myCard.email}|${myCard.website}|${myCard.address} | ${myCard.profilePictureUri}"
-    val appUrl = "https://play.google.com/store/apps/details?id=dev.najeeb.businesscard.cardwallet"
-    var qrContent by remember { mutableStateOf(cardDataString) } // Default to showing contact info
+    qrContent: String,
+    onScanClicked: () -> Unit
+) {
+
     val qrCodeBitmap = generateQrCode(qrContent)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center // Center the content
     ) {
-        Text(
-            modifier = Modifier.padding(vertical = 20.dp),
-            text = "Scan to add my card",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold
+        Spacer(modifier = Modifier.size(16.dp))
+        Icon(
+            imageVector = Icons.Default.QrCodeScanner,
+            contentDescription = "QR Code Scanner Icon",
+            modifier = Modifier
+                .size(40.dp)
+                .clickable(onClick = onScanClicked)
+                .background(color = btnContactColor),
         )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            qrCodeBitmap?.let {
-                Image(
-                    bitmap = it.asImageBitmap(),
-                    contentDescription = "QR Code",
-                    modifier = Modifier
-                        .size(250.dp)
-                        .padding(8.dp),
-                    contentScale = ContentScale.Fit
-                )
-            }
+        Spacer(modifier = Modifier.size(16.dp))
+        // Top buttons for navigation
+        Spacer(modifier = Modifier.size(16.dp))
+        Text(
+            text = "Your Business Card",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+        )
+
+        qrCodeBitmap?.let {
+            Image(
+                bitmap = it.asImageBitmap(),
+                contentDescription = "QR Code",
+                modifier = Modifier
+                    .size(150.dp)
+                    .padding(8.dp),
+                contentScale = ContentScale.Fit
+            )
         }
+
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)){
-            Button(onClick = { qrContent = cardDataString }) {
-                Image(
-                    painter = painterResource(id = R.drawable.person_add),
-                    contentDescription = "Call Icon" ,
-                    modifier = Modifier.size(24.dp)
-                )
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center){
+            Image(modifier = Modifier.size(150.dp, 100.dp), painter = painterResource(id = R.drawable.ic_action_name),
+                    contentDescription = "google play",)
+            Spacer(modifier = Modifier.width(8.dp))
+            Column {
+                Text(text = myCard.name,
+                    color = Purple80)
+                Text(text = myCard.title,
+                    color = Purple80)
+                Text(text = myCard.address,
+                    color = Purple80)
             }
-
-            Button(onClick = { qrContent = appUrl }) {
-                Image(
-                    painter = painterResource(id = R.drawable.outline_download_24),
-                    contentDescription = "Call Icon" ,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-
         }
-
-        Spacer(modifier = Modifier.height(24.dp))
-        Text(
-            text = myCard.name,
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = myCard.title,
-            fontSize = 20.sp,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = myCard.phone,
-            fontSize = 20.sp,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = myCard.email,
-            fontSize = 20.sp,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = myCard.address,
-            fontSize = 20.sp,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = onShowListClicked) {
-            Text("View Collected Cards")
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = onEditClicked) { // <-- ADD THIS BUTTON
-            Text("Edit My Card")
+        Spacer(modifier = Modifier.height(16.dp))
+        Column {
+            Text(text = myCard.phone,
+                color = Purple80 )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(text = myCard.email,
+                color = Purple80)
         }
     }
 }
 
 private fun generateQrCode(content: String): Bitmap? {
     val writer = QRCodeWriter()
+    val blackColor = Color.Black.toArgb() // Convert to Int
+    val whiteColor = Color.White.toArgb()
     return try {
         val bitMatrix = writer.encode(content, BarcodeFormat.QR_CODE, 512, 512)
         val width = bitMatrix.width
@@ -356,7 +513,7 @@ private fun generateQrCode(content: String): Bitmap? {
         val bmp = createBitmap(width, height, Bitmap.Config.RGB_565)
         for (x in 0 until width) {
             for (y in 0 until height) {
-                bmp[x, y] = if (bitMatrix[x, y]) Color.BLACK else Color.WHITE
+                bmp[x, y] = if (bitMatrix[x, y]) blackColor else whiteColor
             }
         }
         bmp
@@ -366,151 +523,34 @@ private fun generateQrCode(content: String): Bitmap? {
     }
 }
 
-
 @Composable
-fun CardListScreen(cards: List<BusinessCard>, onBackClicked: () -> Unit) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        Spacer(modifier = Modifier.height(30.dp))
-        Button(onClick = onBackClicked, modifier = Modifier.padding(8.dp)) {
-            Text("Back to My Card")
-
-        }
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            items(cards) { card ->
-                BusinessCardItem(card = card)
+fun ScannerLauncher(onQrCodeScanned: (String) -> Unit) {
+    val scanLauncher = rememberLauncherForActivityResult(
+        contract = ScanContract(),
+        onResult = { result ->
+            result.contents?.let { qrData ->
+                onQrCodeScanned(qrData)
             }
         }
+    )
+
+    // This launches the scanner as soon as this composable enters the screen
+    LaunchedEffect(key1 = true) {
+        val options = ScanOptions().apply {
+            setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+            setPrompt("Scan a Business Card")
+            setCameraId(0) // Use rear camera
+            setBeepEnabled(true)
+        }
+        scanLauncher.launch(options)
     }
-}
 
-
-@Composable
-fun BusinessCardItem(card: BusinessCard) {
-    val context = LocalContext.current
-    val imageUri = card.profilePictureUri?.let { Uri.parse(it) }
-    Card(
-        modifier = Modifier
-            .fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    // Placeholder UI while the scanner activity is launching
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
-        Row(modifier = Modifier.padding(10.dp, 10.dp, 10.dp)) {
-            Column(
-                modifier = Modifier
-                    .background(CardBackgroundColor)
-                    .padding(16.dp)
-            ) {
-
-                if (imageUri != null) {
-                    Box(
-                        modifier = Modifier
-                            .size(80.dp, 100.dp)
-                    ) {
-                        Image(
-                            modifier = Modifier
-                                .size(80.dp, 100.dp)
-                                .background(Pink40),
-                            painter = rememberAsyncImagePainter(imageUri),
-                            contentDescription = "Profile Picture",
-                            contentScale = ContentScale.FillBounds
-                        )
-                    }
-
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .size(80.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.background),
-                    )
-                }
-                Column(modifier = Modifier.padding(6.dp, 0.dp, 0.dp, 0.dp)) {//5196529106
-                    Row(
-                        modifier = btnModifier
-                            .clickable {
-                                val intent = Intent(Intent.ACTION_DIAL).apply {
-                                    data = "tel:${card.phone}".toUri()
-                                }
-                                context.startActivity(intent)
-                            },
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Text for the phone number
-                        Text(
-                            text = card.phone,
-                            modifier = Modifier.weight(1f),
-                            textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            fontSize = 16.sp
-                        )
-                        Image(
-                            painter = painterResource(id = R.drawable.outline_add_call_24), // TODO: Replace with a phone icon
-                            contentDescription = "Call Icon",
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // --- EMAIL ACTION ROW ---
-                    Row(
-                        modifier = btnModifier
-                            .clickable {
-                                val intent = Intent(Intent.ACTION_SENDTO).apply {
-                                    data = "mailto:${card.email}".toUri()
-                                }
-                                context.startActivity(intent)
-                            },
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = card.email,
-                            modifier = Modifier.weight(1f),
-                            textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                            fontSize = 16.sp
-                        )
-                        // Icon for email
-                        Image(
-                            painter = painterResource(id = R.drawable.outline_alternate_email_24),
-                            contentDescription = "Email Icon",
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                }
-
-            }
-            Spacer(Modifier.width(16.dp))
-            Column(modifier = Modifier.padding(16.dp)) {
-
-                // --- INFO SECTION ---
-                Text(
-                    text = card.name,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = card.title,
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = card.address,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-            }
-        }
+        Text("Launching Scanner...")
     }
 }
 
@@ -529,8 +569,8 @@ fun DefaultPreview() {
                 address = "",
                 profilePictureUri = ""
             ),
-            onShowListClicked = { false },
-            onEditClicked = { false }
+            "",
+            onScanClicked = { false }
         )
     }
 }

@@ -2,6 +2,7 @@
 agp = "8.9.1"
 coilCompose = "2.6.0"
 core = "3.5.3"
+gson = "2.10.1"
 kotlin = "1.9.23"
 ksp = "1.9.23-1.0.20"
 composeCompiler = "1.5.13"
@@ -12,12 +13,18 @@ espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.9.4"
 activityCompose = "1.12.0-alpha09"
 composeBom = "2024.09.00"
+materialIconsExtended = "1.7.8"
 room = "2.6.1"
+zxingAndroidEmbedded = "4.3.0"
 
 [libraries]
+androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
+zxing-android-embedded = { module = "com.journeyapps:zxing-android-embedded", version.ref = "zxingAndroidEmbedded" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-runtime-livedata = { module = "androidx.compose.runtime:runtime-livedata" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 core = { module = "com.google.zxing:core", version.ref = "core" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -39,5 +46,5 @@ androidx-room-compiler = { group = "androidx.room", name = "room-compiler", vers
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-google-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 

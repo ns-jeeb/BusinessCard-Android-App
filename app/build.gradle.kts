@@ -1,7 +1,9 @@
+
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.google.ksp)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -12,8 +14,8 @@ android {
         applicationId = "dev.najeeb.businesscard.cardwallet"
         minSdk = 24
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 3
+        versionName = "1.0.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -27,6 +29,11 @@ android {
     composeOptions {
         // This line connects the compose compiler from your TOML file
         kotlinCompilerExtensionVersion = libs.versions.composeCompiler.get()
+    }
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -62,6 +69,8 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.core)
     implementation(libs.coil.compose)
-    implementation("com.google.code.gson:gson:2.10.1")
-    implementation("androidx.compose.runtime:runtime-livedata")
+    implementation(libs.gson)
+    implementation(libs.androidx.runtime.livedata)
+    implementation(libs.zxing.android.embedded)
+    implementation(libs.androidx.material.icons.extended)
 }

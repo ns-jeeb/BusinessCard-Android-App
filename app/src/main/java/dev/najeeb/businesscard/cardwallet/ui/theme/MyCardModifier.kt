@@ -11,7 +11,6 @@ import androidx.compose.ui.unit.dp
 val btnModifier = Modifier
     .fillMaxWidth()
     .clip(RoundedCornerShape(20))
-    .background(btnContactColor)
 val detailTextStyle = Modifier
     .fillMaxWidth()
     .padding(horizontal = 24.dp)

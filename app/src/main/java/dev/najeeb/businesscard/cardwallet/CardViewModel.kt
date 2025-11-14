@@ -1,6 +1,7 @@
 package dev.najeeb.businesscard.cardwallet
 
 import android.app.Application
+import android.net.Uri
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
@@ -20,6 +21,7 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
     val userCard = mutableStateOf<BusinessCard?>(null) // State for the user's own card
 
     init {
+
         val database = CardDatabase.getDatabase(application)
         cardDao = database.cardDao()
         userRepository = UserRepository(application) // Initialize it
@@ -43,6 +45,11 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
             userRepository.saveUserCard(card)
             // Reload the state after saving
             userCard.value = card
+        }
+    }
+    fun insert(card: BusinessCard){
+        viewModelScope.launch(Dispatchers.IO) {
+            cardDao.insertCard(card)
         }
     }
 
