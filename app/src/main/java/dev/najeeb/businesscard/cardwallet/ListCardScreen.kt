@@ -94,7 +94,7 @@ class ListCardScreen {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .border(3.dp, Purple80, RoundedCornerShape(10.dp)),
+                .border(1.dp, Purple80, RoundedCornerShape(10.dp)),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         ) {
             Row() {
