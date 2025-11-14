@@ -510,7 +510,7 @@ fun BusinessCardScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center){
-            Image(modifier = Modifier.size(150.dp, 100.dp), painter = painterResource(id = R.drawable.ic_action_name),
+            Image(modifier = Modifier.size(150.dp, 100.dp), painter = painterResource(id = R.drawable.business_card_icon),
                     contentDescription = "google play",)
             Spacer(modifier = Modifier.width(8.dp))
             Column {
