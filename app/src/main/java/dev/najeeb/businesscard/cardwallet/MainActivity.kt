@@ -52,6 +52,7 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.LaunchedEffect
 import androidx.core.view.WindowCompat
@@ -120,6 +121,7 @@ fun AppTopBar(
     currentScreen: Screen,
     onNavigateToMyCard: () -> Unit,
     onNavigateToList: () -> Unit,
+    onEditCard: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -143,7 +145,7 @@ fun AppTopBar(
             // Optional: Add an elevation for a shadow effect
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
         ) {
-            Text("My Card")
+            Text("My Card", fontSize = 10.sp)
         }
 
         // Button to go to the "Collected Cards" list
@@ -157,7 +159,20 @@ fun AppTopBar(
 
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
         ) {
-            Text("Collected Cards")
+            Text("Collected Cards", fontSize = 10.sp)
+        }
+
+        Button(
+            onClick = onEditCard,
+            enabled = currentScreen != Screen.EDIT,
+            colors = ButtonDefaults.buttonColors(
+                disabledContainerColor = disabledColor,
+                containerColor = enabledColor,
+            ),
+
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+        ) {
+            Text("Edit Card", fontSize = 10.sp)
         }
     }
 
@@ -215,7 +230,7 @@ fun BusinessCardApp(cardViewModel: CardViewModel) {
                 currentScreen = currentScreen,
                 onNavigateToMyCard = { currentScreen = Screen.MY_CARD },
                 onNavigateToList = { currentScreen = Screen.CARD_LIST },
-
+                onEditCard = { currentScreen = Screen.EDIT }
                 )
         },
         bottomBar = {
@@ -504,9 +519,6 @@ fun BusinessCardScreen(
                 contentScale = ContentScale.Fit
             )
         }
-
-
-        Spacer(modifier = Modifier.height(16.dp))
 
         Spacer(modifier = Modifier.height(16.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
