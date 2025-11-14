@@ -2,7 +2,7 @@ package dev.najeeb.businesscard.cardwallet.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
+val Purple80 = Color(0xFFFFFFFF)
 val PurpleGrey80 = Color(0xFFCCC2DC)
 val Pink80 = Color(0xFFEFB8C8)
 
@@ -11,7 +11,7 @@ val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 val btnContactColor = Color(0xFF2196F3)
 val CardBackgroundColor = Color(0xFF1ECDFA)
-val GradientStart = Color(0xFF563675)
+val GradientStart = Color(0xFFC09F58)
 val GradientEnd = Color(0xFF703A5F)
 val CardBlack = Color(0xFF000000)
 val CardWhite = Color(0xFFFFFFFF)

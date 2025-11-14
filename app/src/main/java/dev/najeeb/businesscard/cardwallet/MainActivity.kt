@@ -124,7 +124,7 @@ fun AppTopBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(brush = Brush.verticalGradient(colors = listOf(GradientStart, GradientEnd)))
+            .background(brush = Brush.verticalGradient(colors = listOf(GradientEnd,GradientEnd)))
             .statusBarsPadding().padding(0.dp,15.dp, 0.dp, 0.dp),
         horizontalArrangement = Arrangement.SpaceEvenly, // Distribute buttons evenly
         verticalAlignment = Alignment.CenterVertically
@@ -275,6 +275,8 @@ fun BusinessCardApp(cardViewModel: CardViewModel) {
                             handleIntent(Intent(Intent.ACTION_VIEW, scannedUri), cardViewModel)
                         } else if (scannedUri.scheme == "https" && "play.google.com" in scannedUri.host.orEmpty()) {
                             context.startActivity(Intent(Intent.ACTION_VIEW, scannedUri))
+                        }else{
+                            currentScreen = Screen.MY_CARD
                         }
                         // After scan, always return to the list
                         currentScreen = Screen.CARD_LIST
@@ -330,7 +332,7 @@ fun AppBottomBar(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(brush = Brush.verticalGradient(colors = listOf(GradientEnd, GradientStart)))
+            .background(brush = Brush.verticalGradient(colors = listOf(GradientStart, GradientEnd)))
             // This handles the space for the system navigation bar (the gesture bar at the bottom)
             .navigationBarsPadding()
             .padding(vertical = 12.dp),
@@ -581,7 +583,8 @@ fun ScannerLauncher(onQrCodeScanned: (String) -> Unit) {
             setDesiredBarcodeFormats(ScanOptions.QR_CODE)
             setPrompt("Scan a Business Card")
             setCameraId(0) // Use rear camera
-            setBeepEnabled(true)
+            setBeepEnabled(false)
+            setOrientationLocked(false)
         }
         scanLauncher.launch(options)
     }
