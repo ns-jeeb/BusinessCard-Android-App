@@ -54,10 +54,11 @@ class ListCardScreen {
     @Composable
     fun CardListScreen(
         cards: List<BusinessCard>,
-        onBackClicked: () -> Unit
+        onItemClicked: (BusinessCard) -> Unit
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
                 .padding(16.dp)
                 .statusBarsPadding()
                 .wrapContentHeight()
@@ -70,7 +71,8 @@ class ListCardScreen {
                             .padding(vertical = 4.dp),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
-                        BusinessCardItem(card = card)
+                        BusinessCardItem(card = card,
+                        onBusinessCardClick = { onItemClicked(card) })
                     }
 
                 }
@@ -80,14 +82,19 @@ class ListCardScreen {
     }
 
     @Composable
-    fun BusinessCardItem(card: BusinessCard) {
+    fun BusinessCardItem(
+        card: BusinessCard,
+        onBusinessCardClick: () -> Unit,
+    ) {
+
         val context = LocalContext.current
         val imageUri = card.profilePictureUri?.let { Uri.parse(it) }
         val patternBrush = rememberPatternBrush(resource = R.drawable.patterngenerated)
 
         Card(
             modifier = Modifier
-                .fillMaxWidth().border(3.dp, Purple80, RoundedCornerShape(10.dp)),
+                .fillMaxWidth()
+                .border(3.dp, Purple80, RoundedCornerShape(10.dp)),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         ) {
             Row() {
@@ -96,7 +103,7 @@ class ListCardScreen {
                         .background(patternBrush)
                         .padding(15.dp),
 
-                ) {
+                    ) {
 
                     if (imageUri != null) {
 
@@ -117,14 +124,24 @@ class ListCardScreen {
                             }
                             Spacer(Modifier.width(16.dp))
                             Column(modifier = Modifier.padding(2.dp)) {
+                                Row {
+                                    Text(
+                                        modifier = Modifier.weight(1f),
+                                        text = card.name,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 20.sp,
+                                        color = Purple80
+                                    )
+                                    Image(
+                                        modifier = Modifier
+                                            .clickable(onClick = { onBusinessCardClick() })
+                                            .size(24.dp),
+                                        painter = painterResource(id = R.drawable.outline_delete_forever_24),
+                                        contentDescription = "Call Icon",
+                                    )
 
-                                // --- INFO SECTION ---
-                                Text(
-                                    text = card.name,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 20.sp,
-                                    color = Purple80
-                                )
+                                }
+
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = card.title,
@@ -146,7 +163,7 @@ class ListCardScreen {
                     }
 
                     Column(modifier = Modifier.padding(6.dp, 0.dp, 0.dp, 0.dp)) {
-                        Row(modifier = Modifier.fillMaxWidth()){
+                        Row(modifier = Modifier.fillMaxWidth()) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 modifier = Modifier.weight(1f),
@@ -219,16 +236,19 @@ class ListCardScreen {
         }
     }
 }
+
 @SuppressLint("LocalContextResourcesRead")
 @Composable
-fun rememberPatternBrush(resource: Int): ShaderBrush{
+fun rememberPatternBrush(resource: Int): ShaderBrush {
     val context = LocalContext.current
-    val imageBitmap = ImageBitmap.imageResource(context.resources,resource)
-    return remember (imageBitmap){
+    val imageBitmap = ImageBitmap.imageResource(context.resources, resource)
+    return remember(imageBitmap) {
         ShaderBrush(
             shader = ImageShader(
-            image =   imageBitmap,
-            tileModeX = TileMode.Repeated,
-            tileModeY = TileMode.Repeated))
+                image = imageBitmap,
+                tileModeX = TileMode.Repeated,
+                tileModeY = TileMode.Repeated
+            )
+        )
     }
 }

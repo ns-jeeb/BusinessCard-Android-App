@@ -41,6 +41,8 @@ import dev.najeeb.businesscard.cardwallet.ui.theme.BusinessCardTheme
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.set
 import android.net.Uri
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.border
 import androidx.compose.material.icons.Icons
@@ -72,7 +74,8 @@ enum class Screen {
     CREATION,
     MY_CARD,
     EDIT,
-    CARD_LIST
+    CARD_LIST,
+    CARD_DETAIL
 }
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -181,6 +184,7 @@ private fun handleIntent(intent: Intent?, viewModel: CardViewModel) {
 fun BusinessCardApp(cardViewModel: CardViewModel) {
     val myCard by cardViewModel.userCard
     val collectedCards by cardViewModel.allCards.observeAsState(initial = emptyList())
+    var selectedCard by remember { mutableStateOf<BusinessCard?>(null) }
 
     val initialScreen = if (myCard == null) Screen.CREATION else Screen.MY_CARD
     var currentScreen by remember(initialScreen) { mutableStateOf(initialScreen) }
@@ -253,7 +257,17 @@ fun BusinessCardApp(cardViewModel: CardViewModel) {
 
                 Screen.CARD_LIST -> ListCardScreen().CardListScreen(
                     cards = collectedCards,
-                    onBackClicked = { currentScreen = Screen.MY_CARD },
+                    onItemClicked = { clickedCard ->
+                        if (currentScreen == Screen.CARD_LIST) {
+                            selectedCard = clickedCard
+                            cardViewModel.deleteCollectedCard(collectedCards[collectedCards.indexOf(clickedCard)])
+                            Log.d("CardListScreen", "${collectedCards[collectedCards.indexOf(clickedCard)]} Card deleted")
+                            Log.d("CardListScreen", "Card List: ${collectedCards.lastIndex}")
+                            currentScreen = Screen.MY_CARD
+                            Toast.makeText(context, "Card Deleted", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+
                 )
 
                 Screen.SCANNER -> ScannerLauncher(
@@ -268,11 +282,28 @@ fun BusinessCardApp(cardViewModel: CardViewModel) {
                         currentScreen = Screen.CARD_LIST
                     }
                 )
+                Screen.CARD_DETAIL -> {
+                    // 4. Display the detail screen for the selected card
+                    selectedCard?.let { card ->
+                        // You would create a new Composable for this
+                        CardDetailScreen(card = card, onBack = { currentScreen = Screen.CARD_DETAIL })
+                    }
+                }
             }
         }
     }
 
 }
+
+@Composable
+fun CardDetailScreen(card: BusinessCard, onBack: () -> Unit) {
+    Box(modifier = Modifier.fillMaxSize().background(enabledColor)){
+        Button(onClick = {}) {
+            Text("this a button")
+        }
+    }
+}
+
 private fun generateCardDataString(myCard: BusinessCard): String {
     val encodedName = Uri.encode(myCard.name)
     val encodedTitle = Uri.encode(myCard.title)
