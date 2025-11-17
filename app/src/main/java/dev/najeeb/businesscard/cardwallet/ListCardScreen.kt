@@ -1,8 +1,10 @@
 package dev.najeeb.businesscard.cardwallet
 
 import android.annotation.SuppressLint
+import android.app.Application
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -54,7 +56,8 @@ class ListCardScreen {
     @Composable
     fun CardListScreen(
         cards: List<BusinessCard>,
-        onItemClicked: (BusinessCard) -> Unit
+        onItemClicked: (BusinessCard) -> Unit,
+        application: Application,
     ) {
         Column(
             modifier = Modifier
@@ -72,7 +75,8 @@ class ListCardScreen {
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
                         BusinessCardItem(card = card,
-                        onBusinessCardClick = { onItemClicked(card) })
+                        onBusinessCardClick = { onItemClicked(card) },
+                            application = application)
                     }
 
                 }
@@ -85,9 +89,8 @@ class ListCardScreen {
     fun BusinessCardItem(
         card: BusinessCard,
         onBusinessCardClick: () -> Unit,
+        application: Application
     ) {
-
-        val context = LocalContext.current
         val imageUri = card.profilePictureUri?.let { Uri.parse(it) }
         val patternBrush = rememberPatternBrush(resource = R.drawable.patterngenerated)
 
@@ -105,23 +108,17 @@ class ListCardScreen {
 
                     ) {
 
-                    if (imageUri != null) {
+                    if (card.profilePictureUri != null) {
 
                         Row(modifier = Modifier.fillMaxWidth()) {
-                            Box(
+                            Image(
                                 modifier = Modifier
-                                    .size(80.dp, 100.dp)
-                            ) {
-                                Image(
-                                    modifier = Modifier
-                                        .size(80.dp, 100.dp)
-                                        .background(Pink40),
-                                    painter = rememberAsyncImagePainter(imageUri),
-                                    contentDescription = "Profile Picture",
-                                    contentScale = ContentScale.FillBounds
-                                )
-
-                            }
+                                    .size(80.dp, 100.dp),
+                                contentScale = ContentScale.Crop,
+                                painter = rememberAsyncImagePainter(card.profilePictureUri),
+                                contentDescription = "Profile Picture",
+                            )
+                            Log.d("imageString@ 122", "${card.profilePictureUri}")
                             Spacer(Modifier.width(16.dp))
                             Column(modifier = Modifier.padding(2.dp)) {
                                 Row {
@@ -183,7 +180,7 @@ class ListCardScreen {
                                     val intent = Intent(Intent.ACTION_DIAL).apply {
                                         data = "tel:${card.phone}".toUri()
                                     }
-                                    context.startActivity(intent)
+                                    application.startActivity(intent)
                                 },
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -210,7 +207,7 @@ class ListCardScreen {
                                     val intent = Intent(Intent.ACTION_SENDTO).apply {
                                         data = "mailto:${card.email}".toUri()
                                     }
-                                    context.startActivity(intent)
+                                    application.startActivity(intent)
                                 },
                             verticalAlignment = Alignment.CenterVertically
                         ) {

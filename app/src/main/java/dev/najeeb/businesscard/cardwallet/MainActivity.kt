@@ -1,5 +1,6 @@
 package dev.najeeb.businesscard.cardwallet
 
+import android.app.Application
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
@@ -36,27 +37,22 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import dev.najeeb.businesscard.cardwallet.ui.theme.BusinessCardTheme
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.set
 import android.net.Uri
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.compose.foundation.border
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContactPhone
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.LaunchedEffect
 import androidx.core.view.WindowCompat
-import dev.najeeb.businesscard.cardwallet.ui.theme.btnModifier
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.toArgb
@@ -65,9 +61,10 @@ import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 import dev.najeeb.businesscard.cardwallet.ui.theme.GradientStart
 import dev.najeeb.businesscard.cardwallet.ui.theme.Purple80
-import dev.najeeb.businesscard.cardwallet.ui.theme.btnContactColor
 import androidx.compose.ui.graphics.Color
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.rememberAsyncImagePainter
 import dev.najeeb.businesscard.cardwallet.ui.theme.disabledColor
 import dev.najeeb.businesscard.cardwallet.ui.theme.enabledColor
 
@@ -100,7 +97,7 @@ class MainActivity : ComponentActivity() {
                         .fillMaxSize()
                         .background(color = GradientEnd),
                 ) {
-                    BusinessCardApp(cardViewModel = cardViewModel)
+                    BusinessCardApp(cardViewModel = cardViewModel, application)
                 }
             }
 
@@ -202,14 +199,14 @@ private fun handleIntent(intent: Intent?, viewModel: CardViewModel) {
 
 
 @Composable
-fun BusinessCardApp(cardViewModel: CardViewModel) {
+fun BusinessCardApp(cardViewModel: CardViewModel, application: Application) {
     val myCard by cardViewModel.userCard
     val collectedCards by cardViewModel.allCards.observeAsState(initial = emptyList())
     var selectedCard by remember { mutableStateOf<BusinessCard?>(null) }
 
     val initialScreen = if (myCard == null) Screen.CREATION else Screen.MY_CARD
     var currentScreen by remember(initialScreen) { mutableStateOf(initialScreen) }
-    var context = LocalContext.current
+
 
     // ** 1. Hoist the QR Code state here! **
     // The strings for the QR codes
@@ -257,14 +254,16 @@ fun BusinessCardApp(cardViewModel: CardViewModel) {
             when (currentScreen) {
                 Screen.CREATION -> CreateCardScreen(
                     existingCard = null,
-                    onCardSaved = { newCard -> cardViewModel.saveOrUpdateUserCard(newCard) }
+                    onCardSaved = { newCard -> cardViewModel.saveOrUpdateUserCard(newCard)},
+                    application
                 )
                 Screen.EDIT -> CreateCardScreen(
                     existingCard = myCard,
                     onCardSaved = { updatedCard ->
                         cardViewModel.saveOrUpdateUserCard(updatedCard)
                         currentScreen = Screen.MY_CARD
-                    }
+                    },
+                    application
                 )
                 Screen.MY_CARD -> myCard?.let { userCard ->
                     BusinessCardScreen(
@@ -281,7 +280,8 @@ fun BusinessCardApp(cardViewModel: CardViewModel) {
                             cardViewModel.deleteCollectedCard(collectedCards[collectedCards.indexOf(clickedCard)])
                             currentScreen = Screen.CARD_LIST
                         }
-                    }
+                    },
+                    application = application
                 )
                 Screen.SCANNER -> ScannerLauncher(
                     onQrCodeScanned = { scannedData ->
@@ -289,7 +289,7 @@ fun BusinessCardApp(cardViewModel: CardViewModel) {
                         if (scannedUri.scheme == "cardwallet" && scannedUri.host == "add") {
                             handleIntent(Intent(Intent.ACTION_VIEW, scannedUri), cardViewModel)
                         } else if (scannedUri.scheme == "https" && "play.google.com" in scannedUri.host.orEmpty()) {
-                            context.startActivity(Intent(Intent.ACTION_VIEW, scannedUri))
+                            application.startActivity(Intent(Intent.ACTION_VIEW, scannedUri))
                         }else{
                             currentScreen = Screen.MY_CARD
                         }
@@ -409,6 +409,7 @@ fun AppBottomBar(
 fun CreateCardScreen(
     existingCard: BusinessCard?,
     onCardSaved: (BusinessCard) -> Unit,
+    application: Application
 ) {
 
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -458,8 +459,21 @@ fun CreateCardScreen(
         TextField(value = address, onValueChange = { address = it }, label = { Text("Your Address") })
         Spacer(modifier = Modifier.height(32.dp))
 
+        ImagePicker(
+            currentImageUri = imageUri,
+            onImagePicked = { uri ->
+                imageUri = uri
+            },
+            modifier = Modifier.padding(vertical = 0.dp),
+            application = application
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+
         Button(
-            modifier = btnModifier,
+            colors = ButtonDefaults.buttonColors(
+                disabledContainerColor = disabledColor,
+                containerColor = enabledColor,
+            ),
             onClick = {
                 val newCard = BusinessCard(
                     id = existingCard?.id ?: 0, // Preserve ID if editing
@@ -475,6 +489,7 @@ fun CreateCardScreen(
                 keyboardController?.hide()
                 focusManager.clearFocus()
             }
+
         ) {
             Text(
                 if (existingCard != null) "Update Card" else "Save Card",
@@ -522,10 +537,19 @@ fun BusinessCardScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+//            Image(
+//                modifier = Modifier.size(150.dp, 100.dp), painter = painterResource(id = R.drawable.business_card_icon),
+//                contentDescription = "google play",
+//            )
             Image(
-                modifier = Modifier.size(150.dp, 100.dp), painter = painterResource(id = R.drawable.business_card_icon),
-                contentDescription = "google play",
+                modifier = Modifier
+                    .size(80.dp, 100.dp),
+                painter = rememberAsyncImagePainter(myCard.profilePictureUri),
+
+                contentDescription = "Profile Picture",
+                contentScale = ContentScale.FillBounds
             )
+            Log.d("imageString @ 558", "${myCard.profilePictureUri}")
             Spacer(modifier = Modifier.width(8.dp))
             Column {
                 Text(

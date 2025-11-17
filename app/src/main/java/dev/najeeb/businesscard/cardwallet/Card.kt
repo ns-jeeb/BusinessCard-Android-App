@@ -35,6 +35,10 @@ interface CardDao {
     @Delete
     fun deleteCards(card: BusinessCard)
 
+    @Query("SELECT * FROM businesscard WHERE id = :id")
+    fun getCardById(id: Int): Flow<BusinessCard?>
+
+
     @Query("SELECT * FROM businesscard ORDER BY name ASC")
     fun getAllCards(): Flow<List<BusinessCard>>
 }

@@ -1,4 +1,5 @@
 package dev.najeeb.businesscard.cardwallet
+import android.app.Application
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -11,6 +12,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,23 +23,23 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
+import dev.najeeb.businesscard.cardwallet.ui.theme.disabledColor
+import dev.najeeb.businesscard.cardwallet.ui.theme.enabledColor
 import java.io.File
 @Composable
 fun ImagePicker(
     currentImageUri: Uri?,
     onImagePicked: (Uri?) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    application: Application
 ) {
-    val context = LocalContext.current
-
-    // Modern way to handle activity results for picking media
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = PickVisualMedia(),
         onResult = { uri ->
             if (uri != null) {
                 // When an image is picked, grant permanent read permission
                 val flag = Intent.FLAG_GRANT_READ_URI_PERMISSION
-                context.contentResolver.takePersistableUriPermission(uri, flag)
+                application.contentResolver.takePersistableUriPermission(uri, flag)
             }
             onImagePicked(uri)
         }
@@ -79,7 +81,10 @@ fun ImagePicker(
             photoPickerLauncher.launch(
                 PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
             )
-        }) {
+        }, colors = ButtonDefaults.buttonColors(
+            disabledContainerColor = disabledColor,
+            containerColor = enabledColor,
+        ),) {
             Text("Change Photo")
         }
     }
