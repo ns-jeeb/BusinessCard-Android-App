@@ -5,8 +5,6 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.result.contract.ActivityResultContracts.*
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -20,28 +18,30 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import coil.compose.rememberAsyncImagePainter
 import dev.najeeb.businesscard.cardwallet.ui.theme.disabledColor
 import dev.najeeb.businesscard.cardwallet.ui.theme.enabledColor
-import java.io.File
+import android.util.Base64
+import android.util.Log
+import androidx.compose.foundation.Image
+import coil.compose.rememberAsyncImagePainter
+
 @Composable
 fun ImagePicker(
-    currentImageUri: Uri?,
+    imageDataString: Uri?,
     onImagePicked: (Uri?) -> Unit,
     modifier: Modifier = Modifier,
     application: Application
 ) {
     val photoPickerLauncher = rememberLauncherForActivityResult(
-        contract = PickVisualMedia(),
+        contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
             if (uri != null) {
-                // When an image is picked, grant permanent read permission
+                // When an image is picked, take a permanent read permission
                 val flag = Intent.FLAG_GRANT_READ_URI_PERMISSION
                 application.contentResolver.takePersistableUriPermission(uri, flag)
             }
-            onImagePicked(uri)
+            onImagePicked(uri) // Pass the original URI back
         }
     )
 
@@ -63,29 +63,32 @@ fun ImagePicker(
                 },
             contentAlignment = Alignment.Center
         ) {
-            if (currentImageUri != null) {
+            if (imageDataString != null) {
                 Image(
-                    painter = rememberAsyncImagePainter(currentImageUri),
+                    painter = rememberAsyncImagePainter(imageDataString),
                     contentDescription = "Profile Picture",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
-            } else {
-                Text("Add Photo")
+                } else {
+                    Text("Invalid Image")
+                }
             }
         }
 
         Spacer(Modifier.height(16.dp))
 
-        Button(onClick = {
-            photoPickerLauncher.launch(
-                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-            )
-        }, colors = ButtonDefaults.buttonColors(
-            disabledContainerColor = disabledColor,
-            containerColor = enabledColor,
-        ),) {
+        Button(
+            onClick = {
+                photoPickerLauncher.launch(
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                )
+            },
+            colors = ButtonDefaults.buttonColors(
+                disabledContainerColor = disabledColor,
+                containerColor = enabledColor,
+            ),
+        ) {
             Text("Change Photo")
         }
     }
-}

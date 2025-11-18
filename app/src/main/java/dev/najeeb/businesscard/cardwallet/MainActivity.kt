@@ -25,7 +25,6 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -37,7 +36,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.core.net.toUri
 import dev.najeeb.businesscard.cardwallet.ui.theme.BusinessCardTheme
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.set
@@ -63,11 +61,13 @@ import dev.najeeb.businesscard.cardwallet.ui.theme.GradientStart
 import dev.najeeb.businesscard.cardwallet.ui.theme.Purple80
 import androidx.compose.ui.graphics.Color
 import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.rememberAsyncImagePainter
 import dev.najeeb.businesscard.cardwallet.ui.theme.disabledColor
 import dev.najeeb.businesscard.cardwallet.ui.theme.enabledColor
 
+import android.util.Base64
+import androidx.compose.ui.res.painterResource
+import androidx.core.net.toUri
 
 enum class Screen {
     SCANNER,
@@ -104,6 +104,31 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        Log.i("MainActivity", "onResume called")
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        Log.i("MainActivity", "onSaveInstanceState called")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Log.i("MainActivity", "onPause called")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.i("MainActivity", "onDestroy called")
+    }
+
+    override fun onStart() {
+        super.onStart()
+        Log.i("MainActivity", "onStart called")
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         // Handle deep link if the app is already open and receives a new one
@@ -123,8 +148,9 @@ fun AppTopBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(brush = Brush.verticalGradient(colors = listOf(GradientEnd,GradientEnd)))
-            .statusBarsPadding().padding(0.dp,15.dp, 0.dp, 0.dp),
+            .background(brush = Brush.verticalGradient(colors = listOf(GradientEnd, GradientEnd)))
+            .statusBarsPadding()
+            .padding(0.dp, 15.dp, 0.dp, 0.dp),
         horizontalArrangement = Arrangement.SpaceEvenly, // Distribute buttons evenly
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -295,7 +321,8 @@ fun BusinessCardApp(cardViewModel: CardViewModel, application: Application) {
                         }
                         // After scan, always return to the list
                         currentScreen = Screen.CARD_LIST
-                    }
+                    },
+                    application
                 )
                 Screen.CARD_DETAIL -> {
                     // 4. Display the detail screen for the selected card
@@ -328,9 +355,8 @@ private fun generateCardDataString(myCard: BusinessCard): String {
     val encodedEmail = Uri.encode(myCard.email)
     val encodedWebsite = Uri.encode(myCard.website)
     val encodedAddress = Uri.encode(myCard.address)
-    val encodedImageUri = Uri.encode(myCard.profilePictureUri ?: "")
 
-    return "cardwallet://add?name=$encodedName&title=$encodedTitle&phone=$encodedPhone&email=$encodedEmail&website=$encodedWebsite&address=$encodedAddress&imageUri=$encodedImageUri"
+    return "cardwallet://add?name=$encodedName&title=$encodedTitle&phone=$encodedPhone&email=$encodedEmail&website=$encodedWebsite&address=$encodedAddress"
 }
 
 @Composable
@@ -460,9 +486,9 @@ fun CreateCardScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         ImagePicker(
-            currentImageUri = imageUri,
-            onImagePicked = { uri ->
-                imageUri = uri
+            imageDataString = imageUri,
+            onImagePicked = { newImageDataString ->
+                imageUri = newImageDataString
             },
             modifier = Modifier.padding(vertical = 0.dp),
             application = application
@@ -483,7 +509,7 @@ fun CreateCardScreen(
                     email = email,
                     website = website,
                     address = address,
-                    profilePictureUri = imageUri?.toString()
+                    profilePictureUri = imageUri.toString()
                 )
                 onCardSaved(newCard)
                 keyboardController?.hide()
@@ -507,6 +533,18 @@ fun BusinessCardScreen(
 ) {
 
     val qrCodeBitmap = generateQrCode(qrContent)
+    val imageDataString = myCard.profilePictureUri
+
+    val imageBytes: ByteArray? = if (imageDataString.isNullOrEmpty()) {
+        null
+    } else {
+        try {
+            Base64.decode(imageDataString, Base64.DEFAULT)
+        } catch (e: IllegalArgumentException) {
+            Log.e("ImageDecode", "Failed to decode Base64 string", e)
+            null
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -515,8 +553,6 @@ fun BusinessCardScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center // Center the content
     ) {
-        Spacer(modifier = Modifier.size(16.dp))
-        // Top buttons for navigation
         Spacer(modifier = Modifier.size(16.dp))
         Text(
             text = "Your Business Card",
@@ -537,19 +573,15 @@ fun BusinessCardScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-//            Image(
-//                modifier = Modifier.size(150.dp, 100.dp), painter = painterResource(id = R.drawable.business_card_icon),
-//                contentDescription = "google play",
-//            )
-            Image(
-                modifier = Modifier
-                    .size(80.dp, 100.dp),
-                painter = rememberAsyncImagePainter(myCard.profilePictureUri),
-
+            coil.compose.AsyncImage(
+                model = imageBytes, // Give it the ByteArray directly
                 contentDescription = "Profile Picture",
-                contentScale = ContentScale.FillBounds
+                modifier = Modifier.size(80.dp, 100.dp),
+                contentScale = ContentScale.FillBounds,
+                // Optional: show a placeholder while loading or if there's an error
+                placeholder = painterResource(id = R.drawable.business_card_icon),
+                error = painterResource(id = R.drawable.business_card_icon)
             )
-            Log.d("imageString @ 558", "${myCard.profilePictureUri}")
             Spacer(modifier = Modifier.width(8.dp))
             Column {
                 Text(
@@ -603,7 +635,7 @@ private fun generateQrCode(content: String): Bitmap? {
 }
 
 @Composable
-fun ScannerLauncher(onQrCodeScanned: (String) -> Unit) {
+fun ScannerLauncher(onQrCodeScanned: (String) -> Unit, application: Application) {
     val scanLauncher = rememberLauncherForActivityResult(
         contract = ScanContract(),
         onResult = { result ->

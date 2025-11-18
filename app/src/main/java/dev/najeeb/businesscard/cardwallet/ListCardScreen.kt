@@ -3,7 +3,7 @@ package dev.najeeb.businesscard.cardwallet
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Intent
-import android.net.Uri
+import android.util.Base64
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -43,14 +42,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
-import coil.compose.rememberAsyncImagePainter
-import dev.najeeb.businesscard.cardwallet.ui.theme.Pink40
 import dev.najeeb.businesscard.cardwallet.ui.theme.Purple80
-import dev.najeeb.businesscard.cardwallet.ui.theme.btnModifier
 
 class ListCardScreen {
     @Composable
@@ -74,9 +69,12 @@ class ListCardScreen {
                             .padding(vertical = 4.dp),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
-                        BusinessCardItem(card = card,
-                        onBusinessCardClick = { onItemClicked(card) },
-                            application = application)
+                        BusinessCardItem(
+                            card = card,
+                            onBusinessCardClick = { onItemClicked(card) },
+                            application = application
+                        )
+
                     }
 
                 }
@@ -91,8 +89,19 @@ class ListCardScreen {
         onBusinessCardClick: () -> Unit,
         application: Application
     ) {
-        val imageUri = card.profilePictureUri?.let { Uri.parse(it) }
         val patternBrush = rememberPatternBrush(resource = R.drawable.patterngenerated)
+        val imageModel: Any? = if (card.profilePictureUri.isNullOrEmpty()) {
+            Log.d("ImageDebug", "Card ID ${card.id}: cardUri is null.")
+            null
+        }else{
+            try {
+                Base64.decode(card.profilePictureUri, Base64.DEFAULT)
+            } catch (e: Exception) {
+                Log.e("ImageDebug", "Card ID ${card.id}: Base64 decoding failed.", e)
+                null
+            }
+        }
+
 
         Card(
             modifier = Modifier
@@ -100,135 +109,149 @@ class ListCardScreen {
                 .border(1.dp, Purple80, RoundedCornerShape(10.dp)),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         ) {
-            Row() {
-                Column(
-                    modifier = Modifier
-                        .background(patternBrush)
-                        .padding(15.dp),
-
-                    ) {
-
-                    if (card.profilePictureUri != null) {
-
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            Image(
-                                modifier = Modifier
-                                    .size(80.dp, 100.dp),
-                                contentScale = ContentScale.Crop,
-                                painter = rememberAsyncImagePainter(card.profilePictureUri),
-                                contentDescription = "Profile Picture",
-                            )
-                            Log.d("imageString@ 122", "${card.profilePictureUri}")
-                            Spacer(Modifier.width(16.dp))
-                            Column(modifier = Modifier.padding(2.dp)) {
-                                Row {
-                                    Text(
-                                        modifier = Modifier.weight(1f),
-                                        text = card.name,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 20.sp,
-                                        color = Purple80
-                                    )
-                                    Image(
-                                        modifier = Modifier
-                                            .clickable(onClick = { onBusinessCardClick() })
-                                            .size(24.dp),
-                                        painter = painterResource(id = R.drawable.outline_delete_forever_24),
-                                        contentDescription = "Call Icon",
-                                    )
-
-                                }
-
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = card.title,
-                                    fontSize = 16.sp,
-                                    color = Purple80
-                                )
-
-
-                            }
-                        }
-
+            // The main container with the pattern background
+            Column(
+                modifier = Modifier
+                    .background(patternBrush)
+                    .padding(15.dp)
+            ) {
+                // --- TOP ROW: IMAGE + NAME/TITLE ---
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically // Align items vertically
+                ) {
+                    if (imageModel != null) {
+                        coil.compose.AsyncImage(
+                            model = imageModel,
+                            contentDescription = "Profile Picture",
+                            modifier = Modifier
+                                .size(80.dp, 100.dp)
+                                .clip(RoundedCornerShape(8.dp)),
+                            contentScale = ContentScale.Crop,
+                            // Provide a placeholder to show while the image is loading
+                            placeholder = painterResource(id = R.drawable.business_card_icon),
+                            // Provide an error drawable if the image fails to load
+                            error = painterResource(id = R.drawable.business_card_icon)
+                        )
                     } else {
+                        // Placeholder for when there is no image
                         Box(
                             modifier = Modifier
-                                .size(80.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.background),
+                                .size(width = 80.dp, height = 100.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.surfaceVariant,
+                                    shape = RoundedCornerShape(8.dp)
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.business_card_icon), // A placeholder icon
+                                contentDescription = "No Image",
+                                modifier = Modifier.size(40.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.width(16.dp))
+
+                    // Name, Title, and Delete Icon Column
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Text(
+                                modifier = Modifier.weight(1f),
+                                text = card.name,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 20.sp,
+                                color = Purple80
+                            )
+                            Image(
+                                modifier = Modifier
+                                    .clickable(onClick = onBusinessCardClick)
+                                    .size(24.dp),
+                                painter = painterResource(id = R.drawable.outline_delete_forever_24),
+                                contentDescription = "Delete Card",
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = card.title,
+                            fontSize = 16.sp,
+                            color = Purple80
                         )
                     }
-
-                    Column(modifier = Modifier.padding(6.dp, 0.dp, 0.dp, 0.dp)) {
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                modifier = Modifier.weight(1f),
-                                text = card.address,
-                                fontSize = 14.sp,
-                                color = Purple80.copy(alpha = 0.7f)
-                            )
-                            Image(
-                                painter = painterResource(id = R.drawable.outline_add_home_24),
-                                contentDescription = "Call Icon",
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }//5196529106
-                        Row(
-                            modifier = btnModifier
-                                .clickable {
-                                    val intent = Intent(Intent.ACTION_DIAL).apply {
-                                        data = "tel:${card.phone}".toUri()
-                                    }
-                                    application.startActivity(intent)
-                                },
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // Text for the phone number
-                            Text(
-                                text = card.phone,
-                                modifier = Modifier.weight(1f),
-                                textAlign = TextAlign.Center,
-                                color = Purple80,
-                                fontSize = 16.sp
-                            )
-                            Image(
-                                painter = painterResource(id = R.drawable.outline_add_call_24),
-                                contentDescription = "Call Icon",
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // --- EMAIL ACTION ROW ---
-                        Row(
-                            modifier = btnModifier
-                                .clickable {
-                                    val intent = Intent(Intent.ACTION_SENDTO).apply {
-                                        data = "mailto:${card.email}".toUri()
-                                    }
-                                    application.startActivity(intent)
-                                },
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = card.email,
-                                modifier = Modifier.weight(1f),
-                                textAlign = TextAlign.Center,
-                                color = Purple80,
-                                fontSize = 16.sp
-                            )
-                            // Icon for email
-                            Image(
-                                painter = painterResource(id = R.drawable.outline_alternate_email_24),
-                                contentDescription = "Email Icon",
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                    }
-
                 }
 
+                Spacer(modifier = Modifier.height(16.dp)) // Add space before the contact details
+
+                // --- BOTTOM COLUMN: CONTACT DETAILS ---
+                Column {
+                    // Address
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Image(
+                            painter = painterResource(id = R.drawable.outline_add_home_24),
+                            contentDescription = "Address Icon",
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = card.address,
+                            fontSize = 14.sp,
+                            color = Purple80.copy(alpha = 0.7f)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Phone
+                    Row(
+                        modifier = Modifier.fillMaxWidth().clickable {
+                            val intent = Intent(Intent.ACTION_DIAL).apply {
+                                data = "tel:${card.phone}".toUri()
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            }
+                            application.startActivity(intent)
+                        },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.outline_add_call_24),
+                            contentDescription = "Call Icon",
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = card.phone,
+                            color = Purple80,
+                            fontSize = 16.sp
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Email
+                    Row(
+                        modifier = Modifier.fillMaxWidth().clickable {
+                            val intent = Intent(Intent.ACTION_SENDTO).apply {
+                                data = "mailto:${card.email}".toUri()
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            }
+                            application.startActivity(intent)
+                        },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.outline_alternate_email_24),
+                            contentDescription = "Email Icon",
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = card.email,
+                            color = Purple80,
+                            fontSize = 16.sp
+                        )
+                    }
+                }
             }
         }
     }
