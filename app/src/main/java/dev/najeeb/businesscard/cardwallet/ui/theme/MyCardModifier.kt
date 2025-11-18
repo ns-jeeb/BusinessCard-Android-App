@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 
 val btnModifier = Modifier
     .fillMaxWidth()
+    .background(color = enabledColor)
     .clip(RoundedCornerShape(20))
 val detailTextStyle = Modifier
     .fillMaxWidth()
