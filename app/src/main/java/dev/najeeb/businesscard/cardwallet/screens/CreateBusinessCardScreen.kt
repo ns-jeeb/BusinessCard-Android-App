@@ -1,4 +1,4 @@
-package dev.najeeb.businesscard.cardwallet
+package dev.najeeb.businesscard.cardwallet.screens
 
 import android.app.Application
 import androidx.compose.foundation.clickable
@@ -31,12 +31,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
+import androidx.navigation.NavController
+import dev.najeeb.businesscard.cardwallet.BusinessCard
+import dev.najeeb.businesscard.cardwallet.ImagePicker
 import dev.najeeb.businesscard.cardwallet.ui.theme.disabledColor
 import dev.najeeb.businesscard.cardwallet.ui.theme.enabledColor
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun CreateCardScreen(
+    navigator: NavController,
     existingCard: BusinessCard?,
     onCardSaved: (BusinessCard) -> Unit,
     application: Application
@@ -118,6 +122,7 @@ fun CreateCardScreen(
                 onCardSaved(newCard)
                 keyboardController?.hide()
                 focusManager.clearFocus()
+                navigator.popBackStack()
             }
 
         ) {

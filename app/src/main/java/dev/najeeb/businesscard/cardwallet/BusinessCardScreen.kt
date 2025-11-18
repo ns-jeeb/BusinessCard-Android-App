@@ -3,6 +3,7 @@ package dev.najeeb.businesscard.cardwallet
 import android.util.Base64
 import android.util.Log
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,13 +24,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.najeeb.businesscard.cardwallet.ui.theme.GradientEnd
 import dev.najeeb.businesscard.cardwallet.ui.theme.Purple80
 
 @Composable
 fun BusinessCardScreen(
     myCard: BusinessCard,
     qrContent: String,
-    onScanClicked: () -> Unit
+    onScanClicked: () -> Unit,
 ) {
 
     val qrCodeBitmap = generateQrCode(qrContent)
@@ -48,10 +50,10 @@ fun BusinessCardScreen(
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxSize().background(color = GradientEnd)
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center // Center the content
+        verticalArrangement = Arrangement.Center
     ) {
         Spacer(modifier = Modifier.size(16.dp))
         Text(
@@ -74,11 +76,10 @@ fun BusinessCardScreen(
         Spacer(modifier = Modifier.height(16.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
             coil.compose.AsyncImage(
-                model = imageBytes, // Give it the ByteArray directly
+                model = imageBytes,
                 contentDescription = "Profile Picture",
                 modifier = Modifier.size(80.dp, 100.dp),
                 contentScale = ContentScale.FillBounds,
-                // Optional: show a placeholder while loading or if there's an error
                 placeholder = painterResource(id = R.drawable.business_card_icon),
                 error = painterResource(id = R.drawable.business_card_icon)
             )

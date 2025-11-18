@@ -12,7 +12,7 @@ import com.google.zxing.qrcode.QRCodeWriter
 
 fun generateQrCode(content: String): Bitmap? {
     val writer = QRCodeWriter()
-    val blackColor = Color.Black.toArgb() // Convert to Int
+    val blackColor = Color.Black.toArgb()
     val whiteColor = Color.White.toArgb()
     return try {
         val bitMatrix = writer.encode(content, BarcodeFormat.QR_CODE, 512, 512)
@@ -59,7 +59,6 @@ fun handleIntent(intent: Intent?, viewModel: CardViewModel) {
             profilePictureUri = data.getQueryParameter("imageUri")
         )
         viewModel.insert(card)
-        // Clear the intent so it's not processed again on rotation
         intent.data = null
     }
 }

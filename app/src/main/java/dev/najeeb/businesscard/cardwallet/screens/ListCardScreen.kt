@@ -1,4 +1,4 @@
-package dev.najeeb.businesscard.cardwallet
+package dev.najeeb.businesscard.cardwallet.screens
 
 import android.annotation.SuppressLint
 import android.app.Application
@@ -45,11 +45,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
+import coil.compose.AsyncImage
+import dev.najeeb.businesscard.cardwallet.BusinessCard
+import dev.najeeb.businesscard.cardwallet.R
 import dev.najeeb.businesscard.cardwallet.ui.theme.Purple80
 
-class ListCardScreen {
     @Composable
-    fun CardListScreen(
+    fun BusinessCardListScreen(
         cards: List<BusinessCard>,
         onItemClicked: (BusinessCard) -> Unit,
         application: Application,
@@ -65,7 +67,7 @@ class ListCardScreen {
                 items(cards) { card ->
                     Card(
                         modifier = Modifier
-                            .fillMaxWidth() // Items can still fill width within the LazyColumn
+                            .fillMaxWidth()
                             .padding(vertical = 4.dp),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
@@ -121,20 +123,17 @@ class ListCardScreen {
                     verticalAlignment = Alignment.CenterVertically // Align items vertically
                 ) {
                     if (imageModel != null) {
-                        coil.compose.AsyncImage(
+                        AsyncImage(
                             model = imageModel,
                             contentDescription = "Profile Picture",
                             modifier = Modifier
                                 .size(80.dp, 100.dp)
                                 .clip(RoundedCornerShape(8.dp)),
                             contentScale = ContentScale.Crop,
-                            // Provide a placeholder to show while the image is loading
                             placeholder = painterResource(id = R.drawable.business_card_icon),
-                            // Provide an error drawable if the image fails to load
                             error = painterResource(id = R.drawable.business_card_icon)
                         )
                     } else {
-                        // Placeholder for when there is no image
                         Box(
                             modifier = Modifier
                                 .size(width = 80.dp, height = 100.dp)
@@ -153,8 +152,6 @@ class ListCardScreen {
                     }
 
                     Spacer(Modifier.width(16.dp))
-
-                    // Name, Title, and Delete Icon Column
                     Column(modifier = Modifier.weight(1f)) {
                         Row(
                             verticalAlignment = Alignment.Top
@@ -183,11 +180,9 @@ class ListCardScreen {
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp)) // Add space before the contact details
-
-                // --- BOTTOM COLUMN: CONTACT DETAILS ---
+                Spacer(modifier = Modifier.height(16.dp))
                 Column {
-                    // Address
+
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Image(
                             painter = painterResource(id = R.drawable.outline_add_home_24),
@@ -203,7 +198,6 @@ class ListCardScreen {
                     }
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Phone
                     Row(
                         modifier = Modifier.fillMaxWidth().clickable {
                             val intent = Intent(Intent.ACTION_DIAL).apply {
@@ -228,7 +222,6 @@ class ListCardScreen {
                     }
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Email
                     Row(
                         modifier = Modifier.fillMaxWidth().clickable {
                             val intent = Intent(Intent.ACTION_SENDTO).apply {
@@ -255,7 +248,7 @@ class ListCardScreen {
             }
         }
     }
-}
+
 
 @SuppressLint("LocalContextResourcesRead")
 @Composable

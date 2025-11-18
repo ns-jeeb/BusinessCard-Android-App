@@ -10,28 +10,22 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.lifecycle.asLiveData
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 
 class CardViewModel(application: Application) : AndroidViewModel(application) {
 
     private val cardDao: CardDao
-    private val userRepository: UserRepository // Add this
+    private val userRepository: UserRepository
 
-    val allCards: LiveData<List<BusinessCard>> // This will now ONLY be collected cards
-    val userCard = mutableStateOf<BusinessCard?>(null) // State for the user's own card
+    val allCards: LiveData<List<BusinessCard>>
+    val userCard = mutableStateOf<BusinessCard?>(null)
 
     init {
 
         val database = CardDatabase.getDatabase(application)
         cardDao = database.cardDao()
-        userRepository = UserRepository(application) // Initialize it
+        userRepository = UserRepository(application)
 
-        // Get all cards EXCEPT the user's own (which we assume has id=1 if it were in the DB)
-        allCards = cardDao.getAllCards().asLiveData()// This is now correct as it only fetches from the DB
-
-        // Load the user's card from SharedPreferences
+        allCards = cardDao.getAllCards().asLiveData()
         loadUserCard()
     }
 
@@ -40,12 +34,9 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
             userCard.value = userRepository.getUserCard()
         }
     }
-
-    // This function now ONLY saves to SharedPreferences
     fun saveOrUpdateUserCard(card: BusinessCard) {
         viewModelScope.launch {
             userRepository.saveUserCard(card)
-            // Reload the state after saving
             userCard.value = card
         }
     }
@@ -67,7 +58,6 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // You would also have functions here for deleting collected cards, etc.
     fun deleteCollectedCard(card: BusinessCard) {
         viewModelScope.launch(Dispatchers.IO) {
             cardDao.deleteCards(card)
