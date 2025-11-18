@@ -1,4 +1,4 @@
-package dev.najeeb.businesscard.cardwallet
+package dev.najeeb.businesscard.cardwallet.screens
 
 import android.util.Base64
 import android.util.Log
@@ -24,6 +24,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
+import dev.najeeb.businesscard.cardwallet.BusinessCard
+import dev.najeeb.businesscard.cardwallet.R
+import dev.najeeb.businesscard.cardwallet.generateQrCode
 import dev.najeeb.businesscard.cardwallet.ui.theme.GradientEnd
 import dev.najeeb.businesscard.cardwallet.ui.theme.Purple80
 
@@ -75,8 +80,8 @@ fun BusinessCardScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-            coil.compose.AsyncImage(
-                model = imageBytes,
+            AsyncImage(
+                model = myCard.profilePictureUri,
                 contentDescription = "Profile Picture",
                 modifier = Modifier.size(80.dp, 100.dp),
                 contentScale = ContentScale.FillBounds,

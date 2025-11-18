@@ -33,7 +33,6 @@ import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.navigation.NavController
 import dev.najeeb.businesscard.cardwallet.BusinessCard
-import dev.najeeb.businesscard.cardwallet.ImagePicker
 import dev.najeeb.businesscard.cardwallet.ui.theme.disabledColor
 import dev.najeeb.businesscard.cardwallet.ui.theme.enabledColor
 

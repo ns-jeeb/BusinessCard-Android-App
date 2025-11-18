@@ -28,7 +28,6 @@ import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 import dev.najeeb.businesscard.cardwallet.AppBottomBar
 import dev.najeeb.businesscard.cardwallet.AppTopBar
-import dev.najeeb.businesscard.cardwallet.BusinessCardScreen
 import dev.najeeb.businesscard.cardwallet.CardViewModel
 import dev.najeeb.businesscard.cardwallet.generateCardDataString
 import dev.najeeb.businesscard.cardwallet.handleIntent

@@ -33,6 +33,7 @@ import androidx.navigation.NavController
 import dev.najeeb.businesscard.cardwallet.ui.theme.disabledColor
 import dev.najeeb.businesscard.cardwallet.ui.theme.enabledColor
 import dev.najeeb.businesscard.cardwallet.screens.BusinessCardApp
+import dev.najeeb.businesscard.cardwallet.screens.BusinessCardScreen
 import dev.najeeb.businesscard.cardwallet.screens.CreateCardRoute
 import dev.najeeb.businesscard.cardwallet.screens.ListRoute
 

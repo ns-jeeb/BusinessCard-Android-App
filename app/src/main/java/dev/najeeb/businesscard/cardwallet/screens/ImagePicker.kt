@@ -1,4 +1,4 @@
-package dev.najeeb.businesscard.cardwallet
+package dev.najeeb.businesscard.cardwallet.screens
 import android.app.Application
 import android.content.Intent
 import android.net.Uri
@@ -21,8 +21,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import dev.najeeb.businesscard.cardwallet.ui.theme.disabledColor
 import dev.najeeb.businesscard.cardwallet.ui.theme.enabledColor
-import android.util.Base64
-import android.util.Log
 import androidx.compose.foundation.Image
 import coil.compose.rememberAsyncImagePainter
 
@@ -37,11 +35,10 @@ fun ImagePicker(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
             if (uri != null) {
-                // When an image is picked, take a permanent read permission
                 val flag = Intent.FLAG_GRANT_READ_URI_PERMISSION
                 application.contentResolver.takePersistableUriPermission(uri, flag)
             }
-            onImagePicked(uri) // Pass the original URI back
+            onImagePicked(uri)
         }
     )
 
@@ -50,7 +47,6 @@ fun ImagePicker(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Display the selected image
         Box(
             modifier = Modifier
                 .size(120.dp)
