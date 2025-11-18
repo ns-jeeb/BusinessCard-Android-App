@@ -30,12 +30,17 @@ import dev.najeeb.businesscard.cardwallet.ui.theme.GradientEnd
 import dev.najeeb.businesscard.cardwallet.ui.theme.GradientStart
 import androidx.core.view.WindowInsetsCompat
 import androidx.navigation.NavController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import dev.najeeb.businesscard.cardwallet.ui.theme.disabledColor
 import dev.najeeb.businesscard.cardwallet.ui.theme.enabledColor
 import dev.najeeb.businesscard.cardwallet.screens.BusinessCardApp
 import dev.najeeb.businesscard.cardwallet.screens.BusinessCardScreen
 import dev.najeeb.businesscard.cardwallet.screens.CreateCardRoute
 import dev.najeeb.businesscard.cardwallet.screens.ListRoute
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.compose.runtime.getValue
+import dev.najeeb.businesscard.cardwallet.screens.HomeRoute
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -82,16 +87,18 @@ fun AppTopBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(brush = Brush.verticalGradient(colors = listOf(GradientEnd, GradientEnd)))
+            .background(brush = Brush.verticalGradient(colors = listOf(GradientStart, GradientEnd)))
             .statusBarsPadding()
             .padding(0.dp, 15.dp, 0.dp, 0.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
+        val navBackStackEntry by navigator.currentBackStackEntryAsState()
+        val currentScreen = navBackStackEntry?.destination
 
         Button(
             onClick = onNavigateToMyCard,
-            enabled = !navigator.equals(CreateCardRoute),
+            enabled = currentScreen?.hasRoute<HomeRoute>() == false,
             colors = ButtonDefaults.buttonColors(
                 disabledContainerColor = disabledColor,
                 containerColor = enabledColor,
@@ -104,7 +111,7 @@ fun AppTopBar(
 
         Button(
             onClick = onNavigateToList,
-            enabled = !navigator.equals(ListRoute),
+            enabled = currentScreen?.hasRoute<ListRoute>() == false,
             colors = ButtonDefaults.buttonColors(
                 disabledContainerColor = disabledColor,
                 containerColor = enabledColor,
@@ -117,7 +124,7 @@ fun AppTopBar(
 
         Button(
             onClick = onEditCard,
-            enabled = !navigator.equals(CreateCardRoute),
+            enabled = currentScreen?.hasRoute<CreateCardRoute>()== false,
             colors = ButtonDefaults.buttonColors(
                 disabledContainerColor = disabledColor,
                 containerColor = enabledColor,
@@ -130,9 +137,6 @@ fun AppTopBar(
     }
 
 }
-
-
-
 @Composable
 fun AppBottomBar(
     currentQrContent: String,

@@ -55,7 +55,7 @@ fun BusinessCardScreen(
 
     Column(
         modifier = Modifier
-            .fillMaxSize().background(color = GradientEnd)
+            .fillMaxSize()
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center

@@ -53,7 +53,10 @@ fun BusinessCardApp(cardViewModel: CardViewModel, application: Application) {
         topBar = {
             AppTopBar(
                 navigator = navController,
-                onNavigateToMyCard = { navController.navigate(HomeRoute)},
+                onNavigateToMyCard = {
+                    navController.navigate(HomeRoute)
+                    qrContent != cardDataString
+                },
                 onNavigateToList = {navController.navigate(ListRoute) },
                 onEditCard = { navController.navigate(CreateCardRoute) }
             )
