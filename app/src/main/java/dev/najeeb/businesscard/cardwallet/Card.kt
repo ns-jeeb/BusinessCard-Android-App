@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Entity(tableName = "businessCard")
 data class BusinessCard(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0, // Unique ID for each card
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val name: String,
     val title: String,
     val phone: String,
@@ -35,11 +35,15 @@ interface CardDao {
     @Delete
     fun deleteCards(card: BusinessCard)
 
+    @Query("SELECT * FROM businesscard WHERE id = :id")
+    fun getCardById(id: Int): Flow<BusinessCard?>
+
+
     @Query("SELECT * FROM businesscard ORDER BY name ASC")
     fun getAllCards(): Flow<List<BusinessCard>>
 }
 
-@Database(entities = [BusinessCard::class], version = 2) // <-- 1. Increment version
+@Database(entities = [BusinessCard::class], version = 2)
 abstract class CardDatabase : RoomDatabase() {
     abstract fun cardDao(): CardDao
 
@@ -62,7 +66,7 @@ abstract class CardDatabase : RoomDatabase() {
                     CardDatabase::class.java,
                     "card_database"
                 )
-                    .addMigrations(MIGRATION_1_2) // <-- 3. Add the migration
+                    .addMigrations(MIGRATION_1_2)
                     .build()
                 INSTANCE = instance
                 instance
