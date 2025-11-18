@@ -139,6 +139,7 @@ fun AppTopBar(
 }
 @Composable
 fun AppBottomBar(
+    navigator: NavController,
     currentQrContent: String,
     cardDataString: String,
     googlePlayUrl: String,
@@ -154,6 +155,8 @@ fun AppBottomBar(
             .padding(vertical = 12.dp),
 
         ) {
+        val navBackStackEntry by navigator.currentBackStackEntryAsState()
+        val currentScreen = navBackStackEntry?.destination
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically,
@@ -162,7 +165,7 @@ fun AppBottomBar(
 
             Button(
                 onClick = { onQrContentChange(cardDataString) },
-               enabled = currentQrContent != cardDataString,
+               enabled = currentQrContent != cardDataString && currentScreen?.hasRoute<HomeRoute>() != false,
                 colors = ButtonDefaults.buttonColors(
                     disabledContainerColor = disabledColor,
                     containerColor = enabledColor,
@@ -186,7 +189,7 @@ fun AppBottomBar(
 
             Button(
                 onClick = { onQrContentChange(googlePlayUrl) },
-                enabled = currentQrContent != googlePlayUrl,
+                enabled = currentQrContent != googlePlayUrl && currentScreen?.hasRoute<HomeRoute>() != false,
                 colors = ButtonDefaults.buttonColors(
                     disabledContainerColor = disabledColor,
                     containerColor = enabledColor

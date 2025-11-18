@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -33,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.ImageShader
 import androidx.compose.ui.graphics.ShaderBrush
@@ -48,6 +50,8 @@ import androidx.core.net.toUri
 import coil.compose.AsyncImage
 import dev.najeeb.businesscard.cardwallet.BusinessCard
 import dev.najeeb.businesscard.cardwallet.R
+import dev.najeeb.businesscard.cardwallet.ui.theme.GradientEnd
+import dev.najeeb.businesscard.cardwallet.ui.theme.GradientStart
 import dev.najeeb.businesscard.cardwallet.ui.theme.Purple80
 
     @Composable
@@ -58,10 +62,9 @@ import dev.najeeb.businesscard.cardwallet.ui.theme.Purple80
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .padding(16.dp)
                 .statusBarsPadding()
-                .wrapContentHeight()
         ) {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(cards) { card ->
@@ -111,7 +114,7 @@ import dev.najeeb.businesscard.cardwallet.ui.theme.Purple80
                 .border(1.dp, Purple80, RoundedCornerShape(10.dp)),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         ) {
-            // The main container with the pattern background
+
             Column(
                 modifier = Modifier
                     .background(patternBrush)
@@ -120,7 +123,6 @@ import dev.najeeb.businesscard.cardwallet.ui.theme.Purple80
                 // --- TOP ROW: IMAGE + NAME/TITLE ---
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically // Align items vertically
                 ) {
                     if (imageModel != null) {
                         AsyncImage(

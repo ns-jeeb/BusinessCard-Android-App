@@ -63,6 +63,7 @@ fun BusinessCardApp(cardViewModel: CardViewModel, application: Application) {
         },
         bottomBar = {
             AppBottomBar(
+                navigator = navController,
                 currentQrContent = qrContent,
                 cardDataString = cardDataString,
                 googlePlayUrl = appUrl,
