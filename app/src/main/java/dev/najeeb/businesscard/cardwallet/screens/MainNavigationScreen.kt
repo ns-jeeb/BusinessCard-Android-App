@@ -21,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -35,12 +36,14 @@ import dev.najeeb.businesscard.cardwallet.ui.theme.GradientEnd
 import dev.najeeb.businesscard.cardwallet.ui.theme.GradientStart
 
 @Composable
-fun BusinessCardApp(cardViewModel: CardViewModel, application: Application) {
+fun BusinessCardApp(application: Application) {
     val navController = rememberNavController()
+    val cardViewModel: CardViewModel = hiltViewModel()
     val myCard by cardViewModel.userCard
     val collectedCards by cardViewModel.allCards.observeAsState(initial = emptyList())
     val cardDataString = myCard?.let { generateCardDataString(it) } ?: ""
     val appUrl = "https://play.google.com/store/apps/details?id=dev.najeeb.businesscard.cardwallet"
+
 
     var qrContent by remember(myCard) { mutableStateOf(cardDataString) }
     val startDestination: Any = if (myCard == null) CreateCardRoute else HomeRoute

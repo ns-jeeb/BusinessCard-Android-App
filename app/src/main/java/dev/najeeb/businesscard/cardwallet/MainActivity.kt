@@ -40,18 +40,19 @@ import dev.najeeb.businesscard.cardwallet.screens.ListRoute
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.compose.runtime.getValue
+import dagger.hilt.android.AndroidEntryPoint
 import dev.najeeb.businesscard.cardwallet.screens.HomeRoute
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private val cardViewModel: CardViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val application = requireNotNull(this).application
         WindowCompat.setDecorFitsSystemWindows(window, true)
         val controller = WindowCompat.getInsetsController(window, window.decorView)
         controller.show(WindowInsetsCompat.Type.systemBars())
-        val cardViewModel: CardViewModel by viewModels {
-            CardViewModelFactory(application)
-        }
+
+
         WindowCompat.enableEdgeToEdge(window)
         handleIntent(intent, cardViewModel)
         setContent {
@@ -61,7 +62,7 @@ class MainActivity : ComponentActivity() {
                         .fillMaxSize()
                         .background(color = GradientEnd),
                 ) {
-                    BusinessCardApp(cardViewModel = cardViewModel, application)
+                    BusinessCardApp(this.application)
                 }
             }
 
