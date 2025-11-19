@@ -66,6 +66,9 @@ import dev.najeeb.businesscard.cardwallet.ui.theme.Purple80
                 .padding(16.dp)
                 .statusBarsPadding()
         ) {
+            if (cards.isEmpty()){
+                Text("There is no card saved")
+            }
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(cards) { card ->
                     Card(

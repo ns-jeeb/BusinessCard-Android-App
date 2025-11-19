@@ -3,6 +3,7 @@ package dev.najeeb.businesscard.cardwallet
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
+import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.createBitmap
@@ -58,7 +59,19 @@ fun handleIntent(intent: Intent?, viewModel: CardViewModel) {
             address = data.getQueryParameter("address") ?: "",
             profilePictureUri = data.getQueryParameter("imageUri")
         )
-        viewModel.insert(card)
+        var cards = viewModel.allCards.value
+        var scannedCar: BusinessCard? = null
+        if (cards.isNullOrEmpty()){
+            viewModel.insert(card)
+        }else {
+            cards.forEach { cardDb ->
+                if (cardDb.phone != card.phone) {
+                    scannedCar = cardDb
+                    viewModel.insert(card)
+                }
+            }
+        }
         intent.data = null
+
     }
 }
