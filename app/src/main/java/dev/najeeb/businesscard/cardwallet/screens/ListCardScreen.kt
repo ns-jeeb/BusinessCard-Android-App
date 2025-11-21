@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -24,8 +25,13 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.ImageShader
 import androidx.compose.ui.graphics.ShaderBrush
@@ -45,24 +52,33 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import dev.najeeb.businesscard.cardwallet.BusinessCard
 import dev.najeeb.businesscard.cardwallet.R
+import dev.najeeb.businesscard.cardwallet.ui.theme.GradientEnd
+import dev.najeeb.businesscard.cardwallet.ui.theme.GradientStart
 import dev.najeeb.businesscard.cardwallet.ui.theme.Purple80
+import dev.najeeb.businesscard.cardwallet.ui.theme.actionModifier
+import dev.najeeb.businesscard.cardwallet.ui.theme.btnContactColor
 
-    @Composable
+@Composable
     fun BusinessCardListScreen(
+        navController: NavController,
         cards: List<BusinessCard>,
         onItemClicked: (BusinessCard) -> Unit,
         application: Application,
     ) {
+        val context = LocalContext.current
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .padding(16.dp)
                 .statusBarsPadding()
-                .wrapContentHeight()
         ) {
+            if (cards.isEmpty()){
+                Text("There is no card saved")
+            }
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(cards) { card ->
                     Card(
@@ -72,6 +88,7 @@ import dev.najeeb.businesscard.cardwallet.ui.theme.Purple80
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
                         BusinessCardItem(
+                            navController = navController,
                             card = card,
                             onBusinessCardClick = { onItemClicked(card) },
                             application = application
@@ -87,6 +104,7 @@ import dev.najeeb.businesscard.cardwallet.ui.theme.Purple80
 
     @Composable
     fun BusinessCardItem(
+        navController: NavController,
         card: BusinessCard,
         onBusinessCardClick: () -> Unit,
         application: Application
@@ -103,7 +121,7 @@ import dev.najeeb.businesscard.cardwallet.ui.theme.Purple80
                 null
             }
         }
-
+        val context = LocalContext.current
 
         Card(
             modifier = Modifier
@@ -111,7 +129,7 @@ import dev.najeeb.businesscard.cardwallet.ui.theme.Purple80
                 .border(1.dp, Purple80, RoundedCornerShape(10.dp)),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         ) {
-            // The main container with the pattern background
+
             Column(
                 modifier = Modifier
                     .background(patternBrush)
@@ -120,7 +138,6 @@ import dev.najeeb.businesscard.cardwallet.ui.theme.Purple80
                 // --- TOP ROW: IMAGE + NAME/TITLE ---
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically // Align items vertically
                 ) {
                     if (imageModel != null) {
                         AsyncImage(
@@ -174,7 +191,7 @@ import dev.najeeb.businesscard.cardwallet.ui.theme.Purple80
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = card.title,
-                            fontSize = 16.sp,
+                            fontSize = 20.sp,
                             color = Purple80
                         )
                     }
@@ -192,19 +209,21 @@ import dev.najeeb.businesscard.cardwallet.ui.theme.Purple80
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = card.address,
-                            fontSize = 14.sp,
+                            fontSize = 11.sp,
                             color = Purple80.copy(alpha = 0.7f)
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
 
+
+
                     Row(
-                        modifier = Modifier.fillMaxWidth().clickable {
+                        modifier = actionModifier.clickable {
                             val intent = Intent(Intent.ACTION_DIAL).apply {
                                 data = "tel:${card.phone}".toUri()
                                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
                             }
-                            application.startActivity(intent)
+                            context.startActivity(intent)
                         },
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -217,19 +236,20 @@ import dev.najeeb.businesscard.cardwallet.ui.theme.Purple80
                         Text(
                             text = card.phone,
                             color = Purple80,
-                            fontSize = 16.sp
+                            fontSize = 11.sp
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Row(
-                        modifier = Modifier.fillMaxWidth().clickable {
-                            val intent = Intent(Intent.ACTION_SENDTO).apply {
-                                data = "mailto:${card.email}".toUri()
-                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                            }
-                            application.startActivity(intent)
-                        },
+                        modifier = actionModifier
+                            .clickable {
+                                val intent = Intent(Intent.ACTION_SENDTO).apply {
+                                    data = "mailto:${card.email}".toUri()
+                                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                }
+                                context.startActivity(intent)
+                            },
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Image(
@@ -241,8 +261,22 @@ import dev.najeeb.businesscard.cardwallet.ui.theme.Purple80
                         Text(
                             text = card.email,
                             color = Purple80,
-                            fontSize = 16.sp
+                            fontSize = 11.sp
                         )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = actionModifier
+                            .clickable(onClick = { navController.navigate(BrochureRoute) })
+                        ,verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            tint = Purple80,
+                            modifier = Modifier.size(24.dp),
+                            imageVector = Icons.Default.Link ,
+                            contentDescription = "Download Icon")
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(text = "View Brochure",color = Purple80, fontSize = 11.sp)
                     }
                 }
             }

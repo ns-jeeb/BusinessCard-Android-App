@@ -8,3 +8,5 @@ import kotlinx.serialization.Serializable
 @Serializable data class EditCardRoute(val cardId: Int)
 @Serializable object ScannerRoute
 @Serializable data class DetailRoute(val cardId: Int)
+@Serializable object BrochureRoute
+@Serializable object ServiceRout

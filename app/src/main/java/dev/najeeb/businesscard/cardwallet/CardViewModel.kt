@@ -1,42 +1,35 @@
 package dev.najeeb.businesscard.cardwallet
 
-import android.app.Application
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.lifecycle.asLiveData
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class CardViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val cardDao: CardDao
-    private val userRepository: UserRepository
+@HiltViewModel
+class CardViewModel @Inject constructor(
+    private val repository: UserRepository,
+    private val cardDao: CardDao ) : ViewModel() {
 
-    val allCards: LiveData<List<BusinessCard>>
+    val allCards = cardDao.getAllCards().asLiveData()
     val userCard = mutableStateOf<BusinessCard?>(null)
 
     init {
-
-        val database = CardDatabase.getDatabase(application)
-        cardDao = database.cardDao()
-        userRepository = UserRepository(application)
-
-        allCards = cardDao.getAllCards().asLiveData()
         loadUserCard()
     }
 
     private fun loadUserCard() {
         viewModelScope.launch {
-            userCard.value = userRepository.getUserCard()
+            userCard.value = repository.getUserCard()
         }
     }
     fun saveOrUpdateUserCard(card: BusinessCard) {
         viewModelScope.launch {
-            userRepository.saveUserCard(card)
+            repository.saveUserCard(card)
             userCard.value = card
         }
     }
@@ -62,14 +55,5 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             cardDao.deleteCards(card)
         }
-    }
-}
-class CardViewModelFactory(private val application: Application) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(CardViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return CardViewModel(application) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
