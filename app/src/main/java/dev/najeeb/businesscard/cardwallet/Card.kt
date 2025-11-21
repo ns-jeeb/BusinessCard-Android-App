@@ -25,7 +25,9 @@ data class BusinessCard(
     val website: String,
     val address: String,
     val profilePictureUri: String? = null,
-    val isFavorite: Boolean = false
+    val isFavorite: Boolean = false,
+    val services: String = "",
+    val about: String = ""
 )
 @Dao
 interface CardDao {

@@ -2,6 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-feature
+        android:name="android.hardware.camera"/>
+
+    <uses-permission android:name="android.permission.CAMERA" />
+
     <application
         android:name=".BusinessCardApplication"
         android:allowBackup="true"
@@ -11,31 +16,36 @@
         android:label="@string/app_name"
         android:roundIcon="@drawable/ic_action_name"
         android:supportsRtl="true"
+        android:enableOnBackInvokedCallback="true"
         android:theme="@style/Theme.BusinessCard"
         tools:targetApi="31">
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:theme="@style/Theme.BusinessCard">
-            <!-- This is your original intent filter for launching the app from the home screen -->
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-
-            <!-- STEP 2: Add this new intent filter for the deep link -->
-            <intent-filter>
-                <!-- This action is required for deep links -->
                 <action android:name="android.intent.action.VIEW" />
-                <!-- This makes the intent filter browsable, so it can be triggered from a QR scan -->
-                <category android:name="android.intent.category.BROWSABLE" />
-                <!-- This is a default category required by the system -->
                 <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
 
-                <!-- Define the custom URL structure your app will respond to -->
                 <data
                     android:host="add"
                     android:scheme="cardwallet" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data
+                    android:host="play.google.com"
+                    android:pathPrefix="/store/apps/details"
+                    android:scheme="https" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 

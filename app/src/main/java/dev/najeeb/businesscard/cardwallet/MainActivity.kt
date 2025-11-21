@@ -2,6 +2,7 @@ package dev.najeeb.businesscard.cardwallet
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -51,8 +52,6 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, true)
         val controller = WindowCompat.getInsetsController(window, window.decorView)
         controller.show(WindowInsetsCompat.Type.systemBars())
-
-
         WindowCompat.enableEdgeToEdge(window)
         handleIntent(intent, cardViewModel)
         setContent {
@@ -90,7 +89,7 @@ fun AppTopBar(
             .fillMaxWidth()
             .background(brush = Brush.verticalGradient(colors = listOf(GradientStart, GradientEnd)))
             .statusBarsPadding()
-            .padding(0.dp, 15.dp, 0.dp, 0.dp),
+            .padding(0.dp, 15.dp, 0.dp, 15.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -102,7 +101,7 @@ fun AppTopBar(
             enabled = currentScreen?.hasRoute<HomeRoute>() == false,
             colors = ButtonDefaults.buttonColors(
                 disabledContainerColor = disabledColor,
-                containerColor = enabledColor,
+                containerColor = GradientEnd.copy(alpha = 0.5f),
             ),
             contentPadding = PaddingValues(15.dp, 0.dp, 15.dp, 0.dp),
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
@@ -115,7 +114,7 @@ fun AppTopBar(
             enabled = currentScreen?.hasRoute<ListRoute>() == false,
             colors = ButtonDefaults.buttonColors(
                 disabledContainerColor = disabledColor,
-                containerColor = enabledColor,
+                containerColor = GradientEnd.copy(alpha = 0.5f),
             ),
 
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
@@ -128,7 +127,7 @@ fun AppTopBar(
             enabled = currentScreen?.hasRoute<CreateCardRoute>()== false,
             colors = ButtonDefaults.buttonColors(
                 disabledContainerColor = disabledColor,
-                containerColor = enabledColor,
+                containerColor = GradientEnd.copy(alpha = 0.5f),
             ),
 
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
@@ -165,11 +164,13 @@ fun AppBottomBar(
             Spacer(Modifier.weight(1f))
 
             Button(
-                onClick = { onQrContentChange(cardDataString) },
+                onClick = {
+                    Log.i("Button Contact info", "Content for QR : $cardDataString")
+                    onQrContentChange(cardDataString) },
                enabled = currentQrContent != cardDataString && currentScreen?.hasRoute<HomeRoute>() != false,
                 colors = ButtonDefaults.buttonColors(
                     disabledContainerColor = disabledColor,
-                    containerColor = enabledColor,
+                    containerColor = GradientEnd.copy(alpha = 0.5f),
                 ),
             ) {
                 Icon(
@@ -189,11 +190,13 @@ fun AppBottomBar(
             Spacer(Modifier.weight(1f))
 
             Button(
-                onClick = { onQrContentChange(googlePlayUrl) },
+                onClick = {
+                    Log.i("Button Download App", "Content for QR : $googlePlayUrl")
+                    onQrContentChange(googlePlayUrl) },
                 enabled = currentQrContent != googlePlayUrl && currentScreen?.hasRoute<HomeRoute>() != false,
                 colors = ButtonDefaults.buttonColors(
                     disabledContainerColor = disabledColor,
-                    containerColor = enabledColor
+                    containerColor = GradientEnd.copy(alpha = 0.5f)
                 )
             ) {
                 Icon(
@@ -210,20 +213,21 @@ fun AppBottomBar(
 @Composable
 fun DefaultPreview() {
     BusinessCardTheme {
-        BusinessCardScreen(
-            BusinessCard(
-                id = 0,
-                name = "Najeeb Sakhizada",
-                title = "Android Developer",
-                phone = "416",
-                email = "",
-                website = "",
-                address = "",
-                profilePictureUri = ""
-            ),
-            "",
-            onScanClicked = { false }
-        )
+//        BusinessCardScreen(
+//            navigator = NavController(),
+//            BusinessCard(
+//                id = 0,
+//                name = "Najeeb Sakhizada",
+//                title = "Android Developer",
+//                phone = "416",
+//                email = "",
+//                website = "",
+//                address = "",
+//                profilePictureUri = ""
+//            ),
+//            "",
+//            onScanClicked = { false }
+//        )
     }
 }
 

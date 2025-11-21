@@ -1,6 +1,5 @@
 package dev.najeeb.businesscard.cardwallet.screens
 
-import android.app.Application
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -42,7 +41,6 @@ fun CreateCardScreen(
     navigator: NavController,
     existingCard: BusinessCard?,
     onCardSaved: (BusinessCard) -> Unit,
-    application: Application
 ) {
 
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -92,14 +90,14 @@ fun CreateCardScreen(
         TextField(value = address, onValueChange = { address = it }, label = { Text("Your Address") })
         Spacer(modifier = Modifier.height(32.dp))
 
-        ImagePicker(
-            imageDataString = imageUri,
-            onImagePicked = { newImageDataString ->
-                imageUri = newImageDataString
-            },
-            modifier = Modifier.padding(vertical = 0.dp),
-            application = application
-        )
+//        ImagePicker(
+//            imageDataString = imageUri,
+//            onImagePicked = { newImageDataString ->
+//                imageUri = newImageDataString
+//            },
+//            modifier = Modifier.padding(vertical = 0.dp),
+//            context = context
+//        )
         Spacer(modifier = Modifier.height(10.dp))
 
         Button(
@@ -109,7 +107,7 @@ fun CreateCardScreen(
             ),
             onClick = {
                 val newCard = BusinessCard(
-                    id = existingCard?.id ?: 0, // Preserve ID if editing
+                    id = existingCard?.id ?: 0,
                     name = name,
                     title = title,
                     phone = phone,

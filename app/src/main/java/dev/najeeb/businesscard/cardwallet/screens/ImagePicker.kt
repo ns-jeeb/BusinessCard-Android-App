@@ -1,5 +1,6 @@
 package dev.najeeb.businesscard.cardwallet.screens
 import android.app.Application
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -29,14 +30,14 @@ fun ImagePicker(
     imageDataString: Uri?,
     onImagePicked: (Uri?) -> Unit,
     modifier: Modifier = Modifier,
-    application: Application
+    context: Context
 ) {
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
             if (uri != null) {
                 val flag = Intent.FLAG_GRANT_READ_URI_PERMISSION
-                application.contentResolver.takePersistableUriPermission(uri, flag)
+                context.contentResolver.takePersistableUriPermission(uri, flag)
             }
             onImagePicked(uri)
         }
