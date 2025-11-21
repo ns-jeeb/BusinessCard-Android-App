@@ -2,6 +2,7 @@ package dev.najeeb.businesscard.cardwallet
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -30,22 +31,27 @@ import dev.najeeb.businesscard.cardwallet.ui.theme.GradientEnd
 import dev.najeeb.businesscard.cardwallet.ui.theme.GradientStart
 import androidx.core.view.WindowInsetsCompat
 import androidx.navigation.NavController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import dev.najeeb.businesscard.cardwallet.ui.theme.disabledColor
 import dev.najeeb.businesscard.cardwallet.ui.theme.enabledColor
 import dev.najeeb.businesscard.cardwallet.screens.BusinessCardApp
+import dev.najeeb.businesscard.cardwallet.screens.BusinessCardScreen
 import dev.najeeb.businesscard.cardwallet.screens.CreateCardRoute
 import dev.najeeb.businesscard.cardwallet.screens.ListRoute
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.compose.runtime.getValue
+import dagger.hilt.android.AndroidEntryPoint
+import dev.najeeb.businesscard.cardwallet.screens.HomeRoute
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private val cardViewModel: CardViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val application = requireNotNull(this).application
         WindowCompat.setDecorFitsSystemWindows(window, true)
         val controller = WindowCompat.getInsetsController(window, window.decorView)
         controller.show(WindowInsetsCompat.Type.systemBars())
-        val cardViewModel: CardViewModel by viewModels {
-            CardViewModelFactory(application)
-        }
         WindowCompat.enableEdgeToEdge(window)
         handleIntent(intent, cardViewModel)
         setContent {
@@ -55,7 +61,7 @@ class MainActivity : ComponentActivity() {
                         .fillMaxSize()
                         .background(color = GradientEnd),
                 ) {
-                    BusinessCardApp(cardViewModel = cardViewModel, application)
+                    BusinessCardApp(this.application)
                 }
             }
 
@@ -81,19 +87,21 @@ fun AppTopBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(brush = Brush.verticalGradient(colors = listOf(GradientEnd, GradientEnd)))
+            .background(brush = Brush.verticalGradient(colors = listOf(GradientStart, GradientEnd)))
             .statusBarsPadding()
-            .padding(0.dp, 15.dp, 0.dp, 0.dp),
+            .padding(0.dp, 15.dp, 0.dp, 15.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
+        val navBackStackEntry by navigator.currentBackStackEntryAsState()
+        val currentScreen = navBackStackEntry?.destination
 
         Button(
             onClick = onNavigateToMyCard,
-            enabled = !navigator.equals(CreateCardRoute),
+            enabled = currentScreen?.hasRoute<HomeRoute>() == false,
             colors = ButtonDefaults.buttonColors(
                 disabledContainerColor = disabledColor,
-                containerColor = enabledColor,
+                containerColor = GradientEnd.copy(alpha = 0.5f),
             ),
             contentPadding = PaddingValues(15.dp, 0.dp, 15.dp, 0.dp),
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
@@ -103,10 +111,10 @@ fun AppTopBar(
 
         Button(
             onClick = onNavigateToList,
-            enabled = !navigator.equals(ListRoute),
+            enabled = currentScreen?.hasRoute<ListRoute>() == false,
             colors = ButtonDefaults.buttonColors(
                 disabledContainerColor = disabledColor,
-                containerColor = enabledColor,
+                containerColor = GradientEnd.copy(alpha = 0.5f),
             ),
 
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
@@ -116,10 +124,10 @@ fun AppTopBar(
 
         Button(
             onClick = onEditCard,
-            enabled = !navigator.equals(CreateCardRoute),
+            enabled = currentScreen?.hasRoute<CreateCardRoute>()== false,
             colors = ButtonDefaults.buttonColors(
                 disabledContainerColor = disabledColor,
-                containerColor = enabledColor,
+                containerColor = GradientEnd.copy(alpha = 0.5f),
             ),
 
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
@@ -129,11 +137,9 @@ fun AppTopBar(
     }
 
 }
-
-
-
 @Composable
 fun AppBottomBar(
+    navigator: NavController,
     currentQrContent: String,
     cardDataString: String,
     googlePlayUrl: String,
@@ -149,6 +155,8 @@ fun AppBottomBar(
             .padding(vertical = 12.dp),
 
         ) {
+        val navBackStackEntry by navigator.currentBackStackEntryAsState()
+        val currentScreen = navBackStackEntry?.destination
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically,
@@ -156,11 +164,13 @@ fun AppBottomBar(
             Spacer(Modifier.weight(1f))
 
             Button(
-                onClick = { onQrContentChange(cardDataString) },
-               enabled = currentQrContent != cardDataString,
+                onClick = {
+                    Log.i("Button Contact info", "Content for QR : $cardDataString")
+                    onQrContentChange(cardDataString) },
+               enabled = currentQrContent != cardDataString && currentScreen?.hasRoute<HomeRoute>() != false,
                 colors = ButtonDefaults.buttonColors(
                     disabledContainerColor = disabledColor,
-                    containerColor = enabledColor,
+                    containerColor = GradientEnd.copy(alpha = 0.5f),
                 ),
             ) {
                 Icon(
@@ -180,11 +190,13 @@ fun AppBottomBar(
             Spacer(Modifier.weight(1f))
 
             Button(
-                onClick = { onQrContentChange(googlePlayUrl) },
-                enabled = currentQrContent != googlePlayUrl,
+                onClick = {
+                    Log.i("Button Download App", "Content for QR : $googlePlayUrl")
+                    onQrContentChange(googlePlayUrl) },
+                enabled = currentQrContent != googlePlayUrl && currentScreen?.hasRoute<HomeRoute>() != false,
                 colors = ButtonDefaults.buttonColors(
                     disabledContainerColor = disabledColor,
-                    containerColor = enabledColor
+                    containerColor = GradientEnd.copy(alpha = 0.5f)
                 )
             ) {
                 Icon(
@@ -201,20 +213,21 @@ fun AppBottomBar(
 @Composable
 fun DefaultPreview() {
     BusinessCardTheme {
-        BusinessCardScreen(
-            BusinessCard(
-                id = 0,
-                name = "Najeeb Sakhizada",
-                title = "Android Developer",
-                phone = "416",
-                email = "",
-                website = "",
-                address = "",
-                profilePictureUri = ""
-            ),
-            "",
-            onScanClicked = { false }
-        )
+//        BusinessCardScreen(
+//            navigator = NavController(),
+//            BusinessCard(
+//                id = 0,
+//                name = "Najeeb Sakhizada",
+//                title = "Android Developer",
+//                phone = "416",
+//                email = "",
+//                website = "",
+//                address = "",
+//                profilePictureUri = ""
+//            ),
+//            "",
+//            onScanClicked = { false }
+//        )
     }
 }
 
