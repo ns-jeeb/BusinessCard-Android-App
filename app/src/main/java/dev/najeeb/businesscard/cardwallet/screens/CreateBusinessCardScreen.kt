@@ -1,5 +1,6 @@
 package dev.najeeb.businesscard.cardwallet.screens
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -11,9 +12,12 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -27,13 +31,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.navigation.NavController
 import dev.najeeb.businesscard.cardwallet.BusinessCard
+import dev.najeeb.businesscard.cardwallet.ui.theme.Purple80
 import dev.najeeb.businesscard.cardwallet.ui.theme.disabledColor
 import dev.najeeb.businesscard.cardwallet.ui.theme.enabledColor
+import java.nio.file.WatchEvent
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -77,17 +84,29 @@ fun CreateCardScreen(
         )
         Spacer(modifier = Modifier.height(10.dp))
 
-        TextField(value = name, onValueChange = { name = it }, label = { Text("Your Name") })
+        OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Your Name") },
+            modifier = Modifier.border(1.dp, Purple80, RoundedCornerShape(8.dp)))
         Spacer(modifier = Modifier.height(16.dp))
-        TextField(value = title, onValueChange = { title = it }, label = { Text("Your Title") })
+        OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Your Title") },
+            modifier = Modifier.border(1.dp, Purple80, RoundedCornerShape(8.dp)))
         Spacer(modifier = Modifier.height(16.dp))
-        TextField(value = phone, onValueChange = { phone = it }, label = { Text("Your Phone") })
+        PhoneNumberField(value = phone, onValueChange = { phone = it }, label = { Text("Your Phone") },
+            modifier = Modifier.border(1.dp, Purple80, RoundedCornerShape(8.dp)))
         Spacer(modifier = Modifier.height(16.dp))
-        TextField(value = email, onValueChange = { email = it }, label = { Text("Your Email") })
+
+        OutlinedTextField(
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("Email Address") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            modifier = Modifier.border(1.dp, Purple80, RoundedCornerShape(8.dp)))
         Spacer(modifier = Modifier.height(16.dp))
-        TextField(value = website, onValueChange = { website = it }, label = { Text("Your Website") })
+        OutlinedTextField(value = website, onValueChange = { website = it }, label = { Text("Your Website") },
+            modifier = Modifier.border(1.dp, Purple80, RoundedCornerShape(8.dp)))
         Spacer(modifier = Modifier.height(16.dp))
-        TextField(value = address, onValueChange = { address = it }, label = { Text("Your Address") })
+        OutlinedTextField(value = address, onValueChange = { address = it }, label = { Text("Your Address") },
+            modifier = Modifier.border(1.dp, Purple80, RoundedCornerShape(8.dp)))
         Spacer(modifier = Modifier.height(32.dp))
 
 //        ImagePicker(
@@ -129,4 +148,52 @@ fun CreateCardScreen(
             )
         }
     }
+}
+
+@Composable
+fun PhoneNumberField(
+    modifier: Modifier = Modifier,
+    // Add parameters to get and update the value from the parent
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: @Composable (() -> Unit)? = null
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = { newValue ->
+            // Only allow digits to be entered
+            if (newValue.all { it.isDigit() }) {
+                onValueChange(newValue)
+            }
+        },
+        label = label,
+        singleLine = true,
+        modifier = modifier,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Number
+        )
+    )
+}
+@Composable
+fun EmailAddressField(
+    modifier: Modifier = Modifier,
+    // Add parameters to get and update the value from the parent
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: @Composable (() -> Unit)? = null
+) {
+    var text by remember { mutableStateOf("") }
+
+    OutlinedTextField(
+        value = text,
+        onValueChange = { text = value },
+        label = label,
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(
+            // 2. Set the keyboard type to Email
+            keyboardType = KeyboardType.Email
+        )
+        // NOTE: Full email validation (e.g., checking for specific domain formats)
+        // should be done when the user submits the form, not on every keystroke.
+    )
 }
